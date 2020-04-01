@@ -1,6 +1,64 @@
 lapply(c('tidyverse', 'dplyr'), require, character=TRUE)
 #### 4.9. Gambler's Problem ####
 #### CREATE HELPER FUNCTIONS ####
+
+FindBestActionAndValueThereof <- function(state,
+                                          state_values, # the current values for all states
+                                          gamma=1, # discount on V(s')
+                                          p_win=.5) {
+  
+  ### Finds the best action (or actions) and the value(s) thereof #
+  
+  # Implements right side of pseudocode for V(s) update in value iter box p. 83 ###
+  
+  # get all the outcomes from this state
+  outcome_list <- CalcOutcomeAllStakes(state,
+                                       p_win=.4)
+  
+  # preallocate vector of action results 
+  action_expectations <- rep(NA, length(outcome_list)) 
+  
+  # iterate through the outcomes to find the value of all possible actions
+  for (outcome in length(outcome_list)) {
+    
+    this_outcome <- outcome_list[[outcome]]  
+    
+    # first find the reward expectation for this state:
+    # (since the only state yielding non-zero reward is the winning terminal 
+    # state we just need to look in column 4)
+    reward_expectation <- this_outcome[4, ]$prob * this_outcome[4, ]$reward
+    browser()
+    # now find the expected values of the non-terminal s_primes
+    s_primes <- 
+      data.frame(this_outcome[1:2, ] %>% filter(probs > 0))
+    
+    v_of_s_prime_expectations <- rep(NA, length(s_primes))
+    
+    for (sp in seq_along(s_primes)) {
+      v_of_s_prime_expectations[s_prime] <- gamma * 
+        s_primes$prob[sp] *
+        # the state values vec includes a terminal state 
+        # at index 1 so the appropriate value is 1 later
+        state_values[s_primes$s_prime[sp]+1]
+    } # end v of s prime iter
+    
+    # calculate the total expectations
+    action_expectations[outcome] <- reward + 
+      v_of_s_prime_expectations/length(s_primes)
+    
+  } # end outcomes iter
+  
+  # recalculate stakes    
+  stakes <- 1:min(state, 100-state)
+  
+  # pass out the best stakes (ie actions) and their values
+  max_inds <- which(action_expectations == max(action_expectations))
+  
+  best_actions_and_values <- data.frame('best_stakes'=stakes[max_inds],
+                                        'values'=max(action_expectations))
+  
+best_actions_and_values    
+}
 CalcOutcomeAllStakes <- function(state,
                                  p_win=.5) {
   
@@ -78,63 +136,6 @@ CalcSPrimeRewAndProbThereof <- function(stake,
   
 SPrimeRewProbs  
 }
-FindBestActionAndValueThereof <- function(state,
-                                          state_values, # the current values for all states
-                                          gamma=1, # discount on V(s')
-                                          p_win=.5) {
-  
-  ### Finds the best action (or actions) and the value(s) thereof #
-  
-  # Implements right side of pseudocode for V(s) update in value iter box p. 83 ###
-  
-  # get all the outcomes from this state
-  outcome_list <- CalcOutcomeAllStakes(state,
-                                       p_win=.4)
-  
-  # preallocate vector of action results 
-  action_expectations <- rep(NA, length(outcome_list)) 
-  
-  # iterate through the outcomes to find the value of all possible actions
-  for (outcome in outcomes) {
-    
-    this_outcome <- outcome_list[[outcome]]  
-    
-    # first find the reward expectation for this state:
-    # (since the only state yielding non-zero reward is the winning terminal 
-    # state we just need to look in column 4)
-    reward_expectation <- this_outcome[4, ]$prob * this_outcome[4, ]$reward
-    
-    # now find the expected values of the non-terminal s_primes
-    s_primes <- 
-      this_outcome[1:2, ] %>% filter(probs > 0) %>% select(s_prime)
-    
-    v_of_s_prime_expectations <- rep(NA, length(s_primes))
-    
-    for (sp in seq_along(s_primes)) {
-      v_of_s_prime_expectations[s_prime] <- gamma * 
-        s_primes$prob[sp] *
-        # the state values vec includes a terminal state 
-        # at index 1 so the appropriate value is 1 later
-        state_values[s_primes[sp]+1]
-    } # end v of s prime iter
-    
-    # calculate the total expectations
-    action_expectations[outcome] <- reward + 
-                                    v_of_s_prime_expectations/length(s_primes)
-    
-  } # end outcomes iter
-  
-  # recalculate stakes    
-  stakes <- 1:min(state, 100-state)
-  
-  # pass out the best stakes (ie actions) and their values
-  max_inds <- which(action_expectations == max(action_expectations))
-  
-  best_action_and_values <- data.frame('best_stakes'=stakes[max_inds],
-                                       'values'=max(action_expectations))
-  
-best_action_and_values    
-}
 ############################################
 ####  INITIALIZATIONS ####
 theta <- 1e-5 # threshold param
@@ -146,58 +147,32 @@ state_values <- runif(length(states), 0, 1)
 # .. except for setting terminal states to 0 and 1
 state_values[1] <- 0; state_values[101] <- 1
 ############################################
+#### FIND OPTIMAL POLICY AND VALUE FX THROUGH VALUE ITERATION ####
+############################################
 # iterate through the non-terminal states 
+if (any(delta_vec > theta)) {
+  
+} else {
+  # value fx
+  
+  # policy output
+  
+}
 for (state in states[2:100]) {
   # pull the state's old value before updating 
   old_v_of_s <- values[state]
   
-  
+  action_value <- FindBestActionAndValueThereof(state,
+                                                state_values, 
+                                                gamma,
+                                                p_win)
+              
 }
 
 
 
 
 
-
-
-
-# don't think we need this
-# # capital(s)
-# capital <- rep(NA, length(states))
-# # capital in states while still playing
-# capital[2:100] <- 1:99
-# # capital in terminal states
-# capital[1] <- 0; capital[101] <- 100 
-# actions = minimum of stake or 1 minus the stake
-
-# probability of winning (eventually wrap into fx)
-p_win <- .4
-
-actions <- 1:min(s, 100-s)
-
-while (delta < theta) {
-  delta <- 0
-  
-  # iterate through states  
-  for (state in states) {
-    # extract the current state value  
-    state_value <- values[state]
-    
-      
-  }
-}
-
-stakes <- 1:min(state, 100-state)
-
-lapply(stakes, CalcSPrimeRewAndProbThereof(stake = stakes,
-                                           state_in = 40,
-                                           p_win = .4,
-                                           terminal_lose_criterion = 0,
-                                           terminal_win_criterion = 100)) 
-
-
-
-  
 ############################################
 
 
