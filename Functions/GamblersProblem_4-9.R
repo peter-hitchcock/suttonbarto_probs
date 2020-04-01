@@ -146,20 +146,13 @@ RunGamblersProblem <- function(
   #### FIND OPTIMAL POLICY AND VALUE FX THROUGH VALUE ITERATION ####
   ############################################
   
-  # if (any(delta_vec > theta)) {
-  #   
-  # } else {
-  #   # value fx
-  #   
-  #   # policy output
-  #   
-  # }
-  
   # initialize vector of changes from old to current state value
   delta_vec <- 1e5
   
   # iterate until these drop below theta
   while(any(delta_vec > theta)) {
+    
+    optimal_policy <- rep(0, length(states))
     
     delta_vec <- rep(0, length(states[2:100]))
     # iterate through the non-terminal states 
@@ -181,8 +174,14 @@ RunGamblersProblem <- function(
            '\n Abs. difference =', delta_vec[state],
             '. \n Optimal stake =', action_value$best_action)
       
+      # replace state value
+      state_values[state] <- action_value$value[1]
+      
+      # store optimal action
+      optimal_policy[state] <- action_value$best_action[1]
     }
   }
-  
   ############################################
+opt_policy_and_value_fx <- data.frame('optimal_policy'=optimal_policy,
+                                      'state_values'=state_values)
 }

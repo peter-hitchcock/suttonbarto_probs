@@ -1,10 +1,11 @@
 lapply(c('tidyverse', 'dplyr'), require, character=TRUE)
 sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
 sf()
+DefPlotPars()
 #### 4.9. Gambler's Problem ####
 ############################################
 ####  INITIALIZATIONS ####
-theta <- 1e-5 # threshold param
+theta <- 1e-2 # threshold param
 gamma <- 1
 states <- 1:101 # one state for 1:99 capital + 2 terminal states
 p_win <- .45 # probability of winning 
@@ -15,7 +16,7 @@ state_values <- runif(length(states), 0, 1)
 state_values[1] <- 0; state_values[101] <- 1
 quiet <- 0 # print 
 ############################################
-policy_and_value_fxs <-  RunGamblersProblem(
+opt_policy_and_value_fx  <-  RunGamblersProblem(
                                             p_win, # probability of winning bet
                                             states, # = capital amounts
                                             state_values, # iteratively updating state values
@@ -23,8 +24,17 @@ policy_and_value_fxs <-  RunGamblersProblem(
                                             gamma, # discount on V(s)'
                                             quiet # print?
                                           ) 
+opt_policy_and_value_fx$state <- states
 
+ggplot(opt_policy_and_value_fx, aes(x=state, y=state_values)) + 
+  geom_line(size=4, color='gray57') + 
+  ga + ap +
+  ylab('state values')
 
+ggplot(opt_policy_and_value_fx, aes(x=state, y=optimal_policy)) + 
+  geom_point(size=4, alpha=.5) +
+  ga + ap +
+  ylab('optimal policy')
 
 
 
