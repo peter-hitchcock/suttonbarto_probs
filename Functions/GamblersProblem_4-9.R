@@ -92,9 +92,9 @@ RunGamblersProblem <- function(
                                           terminal_lose_criterion=0,
                                           terminal_win_criterion=100) {
     
-    ### Returns values and probabilities of 5 possible s',r pairs #
+    ### Returns values and probabilities of 4 possible s',r pairs #
     
-    # Notes: Each state can result in one of 5 (s',r) pairs:
+    # Notes: Each state can result in one of 4 (s',r) pairs:
     
     # 1. s: state + stake (if win and don't end in a terminal state), r: 0
     # 2. s: state - stake (if lose and don't end in a terminal state), r: 0
@@ -143,9 +143,8 @@ RunGamblersProblem <- function(
     
   SPrimeRewProbs  
   }
-  #### FIND OPTIMAL POLICY AND VALUE FX THROUGH VALUE ITERATION ####
   ############################################
-  
+  #### FIND OPTIMAL POLICY AND VALUE FX THROUGH VALUE ITERATION ####
   # initialize vector of changes from old to current state value
   delta_vec <- 1e5
   
