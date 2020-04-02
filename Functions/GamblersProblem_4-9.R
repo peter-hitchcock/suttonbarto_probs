@@ -4,7 +4,8 @@ RunGamblersProblem <- function(
                                state_values, # iteratively updated state values
                                theta=1e-3, # iteration stopping criterion
                                gamma=1, # discount on V(s)'
-                               quiet=1 # print?
+                               quiet=1, # print?
+                               keep_iter_ests=0 # save value estimates from prev iters?
                                ) {
   
   ### Returns optimal policy and value fx (policy and value for each state) #
@@ -148,6 +149,8 @@ RunGamblersProblem <- function(
   # initialize vector of changes from old to current state value
   delta_vec <- 1e5
   
+  if (keep_iter_ests) { all_iters <- list(); sweep_counter <- 0 }
+  
   # iterate until these drop below theta
   while(any(delta_vec > theta)) {
     
@@ -179,8 +182,23 @@ RunGamblersProblem <- function(
       # store optimal action
       optimal_policy[state] <- action_value$best_action[1]
     }
-  }
+    if (keep_iter_ests) {
+      sweep_counter <- sweep_counter + 1
+      
+     all_iters[[sweep_counter]]  <- data.frame('optimal_policy'=optimal_policy,
+                                               'state_values'=state_values,
+                                               'states'=states,
+                                               'sweep'=sweep_counter)
+    } # end state loop 
+  } # end while loop
   ############################################
-opt_policy_and_value_fx <- data.frame('optimal_policy'=optimal_policy,
-                                      'state_values'=state_values)
+  if (!keep_iter_ests) {
+    output <- data.frame('optimal_policy'=optimal_policy,
+                          'states'=states,
+                          'state_values'=state_values) 
+  } else {
+    output <- all_iters
+  }
+  
+output  
 }

@@ -6,7 +6,7 @@ DefPlotPars()
 ############################################
 ####  INITIALIZATIONS ####
 theta <- 1e-2 # threshold param
-gamma <- 1
+gamma <- .8
 states <- 1:101 # one state for 1:99 capital + 2 terminal states
 p_win <- .45 # probability of winning 
 # initalize state values randomly.. 
@@ -14,7 +14,8 @@ state_values <- runif(length(states), 0, 1)
 #state_values <- rep(0, length(states))
 # .. except for setting terminal states to 0 and 1
 state_values[1] <- 0; state_values[101] <- 1
-quiet <- 0 # print 
+quiet <- 0 
+keep_iter_ests <- 1
 ############################################
 opt_policy_and_value_fx  <-  RunGamblersProblem(
                                             p_win, # probability of winning bet
@@ -22,19 +23,44 @@ opt_policy_and_value_fx  <-  RunGamblersProblem(
                                             state_values, # iteratively updating state values
                                             theta, # iteration stopping criterion
                                             gamma, # discount on V(s)'
-                                            quiet # print?
+                                            quiet, # print?
+                                            keep_iter_ests # save estimates from all sweeps?
                                           ) 
-opt_policy_and_value_fx$state <- states
 
-ggplot(opt_policy_and_value_fx, aes(x=state, y=state_values)) + 
-  geom_line(size=4, color='gray57') + 
-  ga + ap +
-  ylab('state values')
+# plots for final value and policy estimates
+if (!keep_iter_ests) {
+  ggplot(opt_policy_and_value_fx, aes(x=states, y=state_values)) + 
+    geom_line(size=4, color='gray57') + 
+    ga + ap +
+    ylab('state values')
+  
+  ggplot(opt_policy_and_value_fx, aes(x=states, y=optimal_policy)) + 
+    geom_point(size=4, alpha=.5) +
+    ga + ap +
+    ylab('optimal policy (amt. to stake)')
+} 
+if (keep_iter_ests) {
+  
+  ov_df <- opt_policy_and_value_fx %>% bind_rows()
+  
+  ggplot(ov_df, aes(x=states, y=state_values, color=as.factor(sweep))) + 
+    geom_line(size=4, alpha=.9) + 
+    ga + ap + 
+    theme(legend.text = element_text(size = 14),
+          legend.title = element_blank(),
+          legend.key.size = unit(2, 'lines')) +
+    ylab('state values')
+  
+  ggplot(df, aes(x=states, y=optimal_policy, color=as.factor(sweep))) + 
+    geom_point(size=4, alpha=.4) +
+    ga + ap + 
+    theme(legend.text = element_text(size = 14),
+          legend.title = element_blank(),
+          legend.key.size = unit(2, 'lines')) +
+    ylab('optimal policy (amt. to stake)') 
+}
 
-ggplot(opt_policy_and_value_fx, aes(x=state, y=optimal_policy)) + 
-  geom_point(size=4, alpha=.5) +
-  ga + ap +
-  ylab('optimal policy')
+
 
 
 
