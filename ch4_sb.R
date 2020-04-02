@@ -34,7 +34,7 @@ if (!keep_iter_ests) {
     ga + ap +
     ylab('state values')
   
-  ggplot(opt_policy_and_value_fx[[124]], aes(x=states, y=optimal_policy)) + 
+  ggplot(opt_policy_and_value_fx[[134]], aes(x=states, y=optimal_policy)) + 
     geom_point(size=4, alpha=.5) +
     ga + ap +
     ylab('optimal policy (amt. to stake)')

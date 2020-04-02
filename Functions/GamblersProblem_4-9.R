@@ -40,12 +40,12 @@ RunGamblersProblem <- function(
       
       # first find the reward expectation for this state:
       # (since the only state yielding non-zero reward is the winning terminal 
-      # state we just need to look in column 4)
+      # state we just need to look in row 4)
       reward_expectation <- this_outcome[4, ]$prob * this_outcome[4, ]$reward
       
       # now find the expected values of the non-terminal s_primes
       s_primes <- data.frame(this_outcome[1:2, ] %>% filter(probs > 0))
-      browser(expr=any(s_primes$s_primes > 100))
+      
       if (nrow(s_primes) == 0) { 
         v_of_s_prime_expectations <- 0
       } else {
@@ -162,12 +162,12 @@ RunGamblersProblem <- function(
   while(any(delta_vec > theta)) {
     
     optimal_policy <- rep(0, length(states))
-    
     delta_vec <- rep(0, length(states[2:100]))
+    
     # iterate through the non-terminal states 
     for (state in states[2:100]) {
       
-      # subtract 1 because the bookending states are dummy states
+      # subtract 1 because the bookending states are dummy states (not s in S)
       if (!quiet) cat('\n State:', state-1)
       
       # pull the state's old value before updating 
@@ -183,6 +183,7 @@ RunGamblersProblem <- function(
       if (!quiet) cat('\n V(s) =', action_value$value, '. Old value was ', old_v_of_s,
            '\n Abs. difference =', delta_vec[state],
             '. \n Optimal stake =', action_value$best_action)
+      pause(.5)
       
       # replace state value
       state_values[state] <- action_value$value[1]
