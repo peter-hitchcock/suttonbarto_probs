@@ -113,7 +113,7 @@ RunGamblersProblem <- function(
     # (state in), the action taken (stake), and the coin probability ###
     
     # fill in the parts of the df we can already fill in
-    SPrimeRewProbs <- data.frame('s_prime'=c(
+    s_prime_rew_probs <- data.frame('s_prime'=c(
       state_in + stake, # win & non-terminal state
       state_in - stake, #w lose & non-terminal state
       1, # losing terminal state
@@ -147,9 +147,9 @@ RunGamblersProblem <- function(
     # jump in debugger if probs don't equal 1 
     browser(expr=sum(probs) != 1)
     
-    SPrimeRewProbs$probs <- probs
+    s_prime_rew_probs$probs <- probs
     
-  SPrimeRewProbs  
+  s_prime_rew_probs  
   }
   ############################################
   #### FIND OPTIMAL POLICY AND VALUE FX THROUGH VALUE ITERATION ####
