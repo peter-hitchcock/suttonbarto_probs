@@ -45,14 +45,21 @@ RunGamblersProblem <- function(
       
       # now find the expected values of the non-terminal s_primes
       s_primes <- data.frame(this_outcome[1:2, ] %>% filter(probs > 0))
-      
+      browser(expr=any(s_primes$s_primes > 100))
       if (nrow(s_primes) == 0) { 
         v_of_s_prime_expectations <- 0
       } else {
         v_of_s_prime_expectations <- rep(NA, nrow(s_primes))
-        
-        for (sp in 1:nrow(s_primes)) v_of_s_prime_expectations[sp] <- 
-            gamma * s_primes$prob[sp] * state_values[s_primes$s_prime[sp]+1]
+        #browser()
+        # need to program the terminal states as special having prob of 
+        # 1 of staying same
+        #browser()
+        for (sp in 1:nrow(s_primes)) {
+          v_of_s_prime_expectations[sp] <- 
+            gamma * 
+            s_primes$prob[sp] * 
+            state_values[s_primes$s_prime[sp]] 
+        }
       }
       
       # calculate the total expectations
@@ -160,7 +167,8 @@ RunGamblersProblem <- function(
     # iterate through the non-terminal states 
     for (state in states[2:100]) {
       
-      if (!quiet) cat('\n State:', state)
+      # subtract 1 because the bookending states are dummy states
+      if (!quiet) cat('\n State:', state-1)
       
       # pull the state's old value before updating 
       old_v_of_s <- state_values[state]

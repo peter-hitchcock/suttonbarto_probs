@@ -5,10 +5,10 @@ DefPlotPars()
 #### 4.9. Gambler's Problem ####
 ############################################
 ####  INITIALIZATIONS ####
-theta <- 1e-2 # threshold param
-gamma <- .8
+theta <- 1e-3 # threshold param
+gamma <- 1
 states <- 1:101 # one state for 1:99 capital + 2 terminal states
-p_win <- .45 # probability of winning 
+p_win <- .4 # probability of winning 
 # initalize state values randomly.. 
 state_values <- runif(length(states), 0, 1)
 #state_values <- rep(0, length(states))
@@ -51,8 +51,8 @@ if (keep_iter_ests) {
           legend.key.size = unit(2, 'lines')) +
     ylab('state values')
   
-  ggplot(df, aes(x=states, y=optimal_policy, color=as.factor(sweep))) + 
-    geom_point(size=4, alpha=.4) +
+  ggplot(ov_df, aes(x=states, y=optimal_policy, color=as.factor(sweep))) + 
+    geom_jitter(size=4, alpha=.2, width=.8, height=.8) +
     ga + ap + 
     theme(legend.text = element_text(size = 14),
           legend.title = element_blank(),
@@ -60,7 +60,11 @@ if (keep_iter_ests) {
     ylab('optimal policy (amt. to stake)') 
 }
 
-
+## currently has a bug: 
+# - possible reasons why: 
+# not implementing lack of transitions at terminal state loses (instead all 
+# info from win is just propagating back)
+# not sure if v' estimates are done correctly 
 
 
 
