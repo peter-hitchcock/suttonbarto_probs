@@ -49,14 +49,17 @@ list(new_loc, money)
 # states=# of cars at each location after day
 # action=sum # of cars moved between locations
 
-CalcSPrimeRewAndItsProb <- function(location, 
-                                    cars_this_loc, 
-                                    cars_other_loc, 
-                                    money,
+CalcSPrimeRewAndItsProb <- function(other_state_value, 
+                                    #cars_this_loc, 
+                                    #cars_other_loc, 
+                                    #money,
                                     max_cars,
                                     max_car_move) {
   
   ### Find the value of all policies from a given location ie state #
+  
+  # r is the amount from moving 
+  # v(s) given by expected rentals during day
   
   # Jack can move 0:min(max_car_move...
   min(, max_car_move-5) cars
