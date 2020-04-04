@@ -5,10 +5,10 @@ DefPlotPars()
 #### 4.9. Gambler's Problem ####
 ############################################
 ####  INITIALIZATIONS ####
-theta <- 1e-3 # threshold param
+theta <- 1e-5 # threshold param
 gamma <- 1
 states <- 1:101 # one state for 1:99 capital + 2 terminal states
-p_win <- .4 # probability of winning 
+p_win <- .15 # probability of winning 
 # initalize state values randomly.. 
 state_values <- runif(length(states), 0, 1)
 #state_values <- rep(0, length(states))
@@ -34,7 +34,7 @@ if (!keep_iter_ests) {
     ga + ap +
     ylab('state values')
   
-  ggplot(opt_policy_and_value_fx[[134]], aes(x=states, y=optimal_policy)) + 
+  ggplot(opt_policy_and_value_fx[[23]], aes(x=states, y=optimal_policy)) + 
     geom_point(size=4, alpha=.5) +
     ga + ap +
     ylab('optimal policy (amt. to stake)')
@@ -44,20 +44,20 @@ if (keep_iter_ests) {
   ov_df <- opt_policy_and_value_fx %>% bind_rows()
   
   ggplot(ov_df, aes(x=states, y=state_values, color=as.factor(sweep))) + 
-    geom_line(size=4, alpha=.9) + 
+    geom_line(size=2, alpha=.9) + 
     ga + ap + 
-    theme(legend.text = element_text(size = 14),
+    theme(legend.text = element_text(size = 8),
           legend.title = element_blank(),
-          legend.key.size = unit(2, 'lines')) +
+          legend.key.size = unit(.8, 'lines')) +
     ylab('state values')
   
-  ggplot(ov_df, aes(x=states, y=optimal_policy, color=as.factor(sweep))) + 
-    geom_jitter(size=4, alpha=.2, width=.8, height=.8) +
+  ggplot(ov_df %>% filter(sweep %in% 94), aes(x=states, y=optimal_policy, color=as.factor(sweep))) + 
+    geom_jitter(size=4, alpha=.6, width=.8, height=.8) +
     ga + ap + 
     theme(legend.text = element_text(size = 14),
           legend.title = element_blank(),
           legend.key.size = unit(2, 'lines')) +
-    ylab('optimal policy (amt. to stake)') 
+    ylab('optimal policy (amt. to stake)') + ylim(0, 100)
 }
 
 ## currently has a bug: 

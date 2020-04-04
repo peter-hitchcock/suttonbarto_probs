@@ -50,10 +50,7 @@ RunGamblersProblem <- function(
         v_of_s_prime_expectations <- 0
       } else {
         v_of_s_prime_expectations <- rep(NA, nrow(s_primes))
-        #browser()
-        # need to program the terminal states as special having prob of 
-        # 1 of staying same
-        #browser()
+        
         for (sp in 1:nrow(s_primes)) {
           v_of_s_prime_expectations[sp] <- 
             gamma * 
@@ -104,10 +101,10 @@ RunGamblersProblem <- function(
     
     # Notes: Each state can result in one of 4 (s',r) pairs:
     
-    # 1. s: state + stake (if win and don't end in a terminal state), r: 0
-    # 2. s: state - stake (if lose and don't end in a terminal state), r: 0
-    # 3. s: terminal state lose, r: 0 
-    # 4. s: terminal state win, r: 0
+    # 1. s': state + stake (if win and don't end in a terminal state), r: 0
+    # 2. s': state - stake (if lose and don't end in a terminal state), r: 0
+    # 3. s': terminal state lose, r: 0 
+    # 4. s': terminal state win, r: 0
     
     # The probability of ending in each state depends solely on the current state
     # (state in), the action taken (stake), and the coin probability ###
@@ -183,7 +180,6 @@ RunGamblersProblem <- function(
       if (!quiet) cat('\n V(s) =', action_value$value, '. Old value was ', old_v_of_s,
            '\n Abs. difference =', delta_vec[state],
             '. \n Optimal stake =', action_value$best_action)
-      pause(.5)
       
       # replace state value
       state_values[state] <- action_value$value[1]
@@ -193,12 +189,14 @@ RunGamblersProblem <- function(
     }
     if (keep_iter_ests) {
       sweep_counter <- sweep_counter + 1
-      
+    
+    #browser(expr=sweep_counter>90)    
      all_iters[[sweep_counter]]  <- data.frame('optimal_policy'=optimal_policy,
                                                'state_values'=state_values,
                                                'states'=states,
                                                'sweep'=sweep_counter)
     } # end state loop 
+    
   } # end while loop
   ############################################
   if (!keep_iter_ests) {
