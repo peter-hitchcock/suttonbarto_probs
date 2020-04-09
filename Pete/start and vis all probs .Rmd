@@ -1,0 +1,391 @@
+---
+title: "Notebook to start and visualize all problems after Chapter 4"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r setup}
+lapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
+sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
+sf()
+DefPlotPars()
+```
+
+## Chapter 4
+
+#### Solving Jack's car rental problem via policy iteration
+
+```{r}
+#### INITIALIZATIONS ####
+locations <- c(1, 2) # rental car locations
+n_customers <- NA # customers arriving each day
+max_cars <- 20 # cars at a location can't exceed this amt
+max_car_move <- 5
+gamma <- .9 # discount
+rent_lag <- 1 # days (states) need to wait before can return cars
+policy <- rep(0, locations) # initialize at move no cars
+state_values <- rep(0, locations) # initialize at no state values
+theta <- 1e-3
+############################################
+ReturnLoc1 <- function(n) rpois(n, 3)
+ReturnLoc2 <- function(n) rpois(n, 2)
+RentLoc1 <- function(n) rpois(n, 3)
+RentLoc2 <- function(n) rpois(n, 4)
+
+TryToRent <- function(n_cars) money <- ifelse(n_cars > 0, 10, 0)
+MoveCar <- function(current_loc, money) {
+  #### Dock $2 and return new location for moving a car ####
+  
+  # new location is the other location
+  new_loc <- ifelse(current_loc==1, 2, 1)
+  money <- money-2
+
+list(new_loc, money)     
+}
+
+# time steps=days
+# states=# of cars at each location after day
+# action=sum # of cars moved between locations
+
+CalcSPrimeRewAndItsProb <- function(other_state_value, 
+                                    #cars_this_loc, 
+                                    #cars_other_loc, 
+                                    #money,
+                                    max_cars,
+                                    max_car_move) {
+  
+  ### Find the value of all policies from a given location ie state #
+  
+  # r is the amount from moving 
+  # v(s) given by expected rentals during day
+  
+  # Jack can move 0:min(max_car_move...
+  min(, max_car_move-5) cars
+  
+  
+  
+}
+
+delta_vec <- 1e5
+
+while (delta_vec > theta) {
+  
+}
+
+for (state in seq_along(locations)) {
+  old_value <- state_values[state]
+  
+}
+
+```
+
+
+## Chapter 5  
+
+#### Race car problem 5.12
+
+```{r}
+#### HELPER FUNCTIONS ####
+## General and for Initializations ## 
+CMat2RC <- function(mat_ind, nrows=track_height) {
+  ### Convert from matrix index to row, column indices ###
+  rc <- rep(NA, 2)
+  if (mat_ind <= nrows) {
+    # then we're in first column
+    rc[2] <- 1
+    rc[1] <- nrows
+  } else {
+    rc[2] <- floor(mat_ind/nrows)
+    rc[1] <- mat_ind %% nrows
+  }
+rc  
+}
+CRC2Mat <- function(rc, nrows=track_height) {
+  ### Convert from row, column indices to matrix indices #
+  mat_ind <- rc[2] * nrows + rc[1]
+mat_ind  
+}
+InitTrack <- function(track_height) {
+  ### Initialize track where 0s represent starting states, 2s finish
+  # states inclusive possible states that overshoot boundary, 
+  # 1 intermediate states, and NAs off track and non-finish #
+  
+  track <- matrix(1, track_height, 19)
+  track[track_height, ] <- 0
+  track[, 15:19] <- 2
+  track[1:10, 1:5] <- NA
+  track[11:12, 1:3] <- NA
+  track[13:14, 1:2] <- NA
+  track[15, 1:2] <- NA
+  track[15:track_height, 11:19] <- NA
+
+track    
+}
+## For Generating an Episode ##
+### Randomly pick a starting state index (used to start each ep) ###
+GenEpStartState <- function(start_inds) start_inds[round(runif(1, 1, length(start_inds)))]
+UpdateEpisode <- function(t,
+                          velocity,
+                          curr_state,
+                          curr_hor_act,
+                          curr_ver_act) {
+  
+     ### Update episode this time step ###
+     
+     episode$states[t] <- curr_state
+     episode$hor_actions[t] <- curr_hor_act
+     epsiode$ver_actions[t] <- curr_ver_act  
+     episode$velocity[t] <- velocity
+
+episode 
+}
+TransitionSAR <- function(track, # to find if where actions-1|state-1 moved us is an intermed, off track or finish state
+                          policy_row, # data_frame 
+                          curr_state,
+                          curr_velocity
+                          ) {
+     
+     ###  Returns next SAR and velocity ###
+     
+     next_state <- a
+       
+     
+list("ns"=next_state, "nha"=next_hor_act, "nva"=next_ver_act, "rew"=reward, "vel"=velocity)   
+}
+GenerateEpisode <- function(
+                             # always initialize S_0 to starting states bc they're what we want 
+                             # to derive policy for
+                             states_0, 
+                             finish_inds,
+                             actions_0, # 1 row data frame of horizontal, vertical actions
+                             # track to find matrix indices of subsequent states 
+                             track, 
+                             # policy to follow after initial actions
+                             policy, 
+                             # length of episode if boundary isn't reached first
+                             time_steps=15,
+                             quiet=0
+                             ) {
+   
+   ### Returns min(time step, bounary reached) S, A, R triples ###
+   
+   episode <- data.frame('states'=rep(NA, time_steps), 
+                         'hor_actions'=rep(NA, time_steps), 
+                         'ver_actions'=rep(NA, time_steps),
+                         'rewards'=rep(NA, time_steps),
+                         # track velocity for informational purposes
+                         'velocity'=rep(NA, time_steps))
+   
+   
+   
+   # set current state and actions to S_0 and A_0s
+   t <- 1 # time step
+   velocity <- 0
+   curr_state <- states_0[runif(1, 0, length(states_0))]
+   curr_hor_act <- actions_0$hor
+   curr_ver_act <- actions_0$ver
+   curr_velocity <- c(0, 0) # initialize at 0 velocity
+   
+   terminal <- 0
+   # continue generating episode until a terminal state is reached or time steps run out
+   while (terminal == 0 & t < time_steps) {
+     SARV <- TransitionSAR(track, 
+                           policy_row=policy %>% filter(m_ind_state == state),
+                           curr_state,
+                           curr_velocity
+                           )
+     episode <- UpdateEpisode(t, velocity, curr_state, curr_hor_act, curr_ver_act, episode)
+   }
+
+   
+episode   
+}
+############################################
+
+
+
+
+
+#### INTIIALIZATIONS ####
+############################################
+track <- InitTrack()
+# vertical and horizontal current velocities (can never exceed 5 or both be 0 except at start)
+start_velocity <- data.frame('hor'=0, 'ver'=0)
+# matrix representation of action set where actions corresopnd to changes in 
+a_mat <- expand.grid('hor'=c(-1, 0, 1), 'ver'=c(-1, 0, 1))
+
+MCSolveRaceTrack <- function(
+                             track,
+                             start_velocity,
+                             a_mat,
+                             reset_velocity=0,
+                             MC_policy="Exploring Starts"="Exploring Starts",
+                             quiet=0
+                             ) {
+  ### Solve the racetrack problem with Monte Carlo returning an optimal policy for 
+  # each starting state ###
+  
+ #### INITIALIZATIONS ####
+ n_states <- length(which(!is.na(track)))  
+ current_velocity <- start_velocity
+ # matrix indices of all start points..
+ start_inds <- which(track == 0)
+ # .. finish line states
+ finish_inds <- which(track == 2)
+ # .. and valid states
+ state_inds <- which(!is.na(track))
+ # must be at least 16
+ track_height <- 30
+ ############################################  
+ 
+ GenerateEpisode <- function(
+                             # always initialize S_0 to starting states bc they're what we want 
+                             # to derive policy for
+                             states_0, 
+                             finish_inds,
+                             actions_0, # 1 row data frame of horizontal, vertical actions
+                             # track to find matrix indices of subsequent states 
+                             track, 
+                             # policy to follow after initial actions
+                             policy, 
+                             # length of episode if boundary isn't reached first
+                             time_steps=15,
+                             quiet=0
+                             ) {
+   
+   ### Returns min(time step, bounary reached) S, A, R triples ###
+   
+   episode <- data.frame('states'=rep(NA, time_steps), 
+                         'hor_actions'=rep(NA, time_steps), 
+                         'ver_actions'=rep(NA, time_steps),
+                         'rewards'=rep(NA, time_steps),
+                         # track velocity for informational purposes
+                         'velocity'=rep(NA, time_steps))
+   
+   
+   
+   # set current state and actions to S_0 and A_0s
+   t <- 1 # time step
+   velocity <- 0
+   curr_state <- states_0[runif(1, 0, length(states_0))]
+   curr_hor_act <- actions_0$hor
+   curr_ver_act <- actions_0$ver
+   curr_velocity <- c(0, 0) # initialize at 0 velocity
+   
+   terminal <- 0
+   while (terminal == 0 & t < time_steps) {
+     SARV <- TransitionSAR(track, 
+                           policy_row=policy %>% filter(m_ind_state == state),
+                           curr_state,
+                           )
+     episode <- UpdateEpisode(t, velocity, curr_state, curr_hor_act, curr_ver_act, episode)
+   }
+   
+   
+   
+   
+   
+   
+   
+ } 
+
+ # implement early starts policy (p.99) ** others not yet implemented
+ if (MC_policy == "Exploring Starts") {
+   
+   # ** change these to row column indices
+   # Initalize equal policy for each state, where the first col gives state index and
+   # the subsequent states give horizontal and vertical states
+   policy <- data.frame("m_ind_state"=state_inds) # matrix index of each valid state
+   # ** need to build in constraint below of not 0 velocity for both
+   policy[, paste("hor", 0:5, sep="_")] <- 1/6
+   policy[, paste("ver", 0:5, sep="_")] <- 1/6 
+
+   # Initialize Q matrix 
+   Q_mat <- data.frame('m_ind_state'=state_inds)
+   Q_mat[, paste("hor", 0:5, sep="_")] <- 1
+   Q_mat[, paste("ver", 1:5, sep="_")] <- 1
+   
+   returns <- list()
+   
+   GenerateEpisode(states_0=start_inds, 
+                 finish_inds, 
+                 # randomly select horizontal and vertical actions from set of allowed actions
+                 actions_0=data.frame('hor'=a_mat$hor[round(runif(1, 1, 9))],
+                                      'ver'=a_mat$ver[round(runif(1, 1, 9))]),
+                 track,
+                 policy)
+   
+   
+ }
+ 
+ 
+optimal_policy_each_state   
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Translating pseudocode for first-visit MC p. 92
+
+```{r}
+policy <- c(.5, .5) # equiprobably visit every state
+states <- matrix(1:10, 2, 5) # create 10 total arbitrarily indexed states states
+# randomly assign rewards to the states
+state_values <- matrix(runif(states, -10, 10), 2, 5) 
+returns <- rep(NA, length(states)) # returns to fill with experience
+gamma <- .8 # discount
+
+#loop forever
+while (1==1) {
+  # generate an episode by following policy pi
+  # ** to do:
+  ## start at state 1
+  # generate action|pi to get to next state
+  # if (state %% 2) then with pi probabities +1/+2; if ! with pi probs +2/+3
+  # collect reward from transition
+  # .. keep moving
+  
+  time_steps <- 5 # for 5 time steps
+  # can just dynamically create G in R
+  
+  # iterate thru time steps
+  for (step in seq_along(time_steps)) {
+    # .. discounting time step as you go 
+    time_steps <- time_steps-1
+    G <- G * gamma + reward[time_steps+1] # summed returns
+    if (!states[time_step] %in% previous_states) { # ** where did we get previous states?
+      returns[[this_state]] <- G # * we don't have this index yet
+      state_values[this_state] <- mean(returns[[this_state]]) 
+    }
+  }
+
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
