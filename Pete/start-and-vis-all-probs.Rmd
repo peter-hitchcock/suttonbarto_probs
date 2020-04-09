@@ -109,17 +109,17 @@ CRC2Mat <- function(rc, nrows=track_height) {
 mat_ind  
 }
 InitTrack <- function(track_height) {
-  ### Initialize track where 0s represent starting states, 2s finish
-  # states, 1 intermediate states, and NAs off track and non-finish #
+  ### Initialize track where 0s represent starting states, 2s finish states inclusive those 
+  # past boundary, 1 intermediate states, and NAs off track and non-finish #
   
   track <- matrix(1, track_height, 15)
   track[track_height, ] <- 0
-  track[, 15] <- 2
+  track[, 15:19] <- 2
   track[1:10, 1:5] <- NA
   track[11:12, 1:3] <- NA
   track[13:14, 1:2] <- NA
   track[15, 1:2] <- NA
-  track[15:track_height, 11:15] <- NA
+  track[15:track_height, 11:19] <- NA
 
 track    
 }
@@ -144,39 +144,94 @@ episode
 TransitionSAR <- function(track, # to find if actions-1|state-1 moved us is an intermed, off track or finish state
                           state_policy,
                           curr_state,
-                          curr_velocity
+                          curr_velocity,
+                          noise_velocity=0
                           ) {
      
      ###  Returns next SAR and velocity ###
      
-     next_state <- a
-       
+     # Get row, column representation of state
+     curr_state_rc <- curr_state_rc <- CMat2RC(curr_state) 
      
-list("ns"=next_state, "nha"=next_hor_act, "nva"=next_ver_act, "rew"=reward, "vel"=velocity)   
+     # Generate action and current velocity
+     # indicator to increment velocity 0 irrespective action cohosen
+     incr_vel_0 <- ifelse(runif(1, 0, 1) < noise_velocity, 1, 0)
+     if (t == 1) {
+       hor_av <- SelectAction("hor", curr_velocity$hor, t, incr_vel_0)
+       ver_av <- SelectAction("ver", curr_velocity$ver, t, incr_vel_0)
+       curr_actions <- list("curr_hor_act"=hor_av$a, "curr_ver_act"=ver_av$a)
+       curr_velocity <- list("curr_hor_vel"=hor_av$v, "curr_ver_vel"=ver_av$v)
+       # velocity
+     } else {
+       # enforce constraint that at least 1 velocity is greater than 0
+       while (all(curr_velocity)==0) {
+         hor_av <- SelectAction("hor", curr_velocity$hor, t)
+         ver_av <- SelectAction("ver", curr_velocity$ver, t)
+         curr_actions <- list("curr_hor_act"=hor_av$a, "curr_ver_act"=ver_av$a)
+         curr_velocity <- list("curr_hor_vel"=hor_av$v, "curr_ver_vel"=ver_av$v)
+       }
+     }
+     
+     # Use current velocity to find s'
+     # Recalculate the matrix indices ..
+     state_inds <- which(!is.na(track))
+     # .. and row, column indices of all states
+     state_rc_inds <- lapply(state_inds, CMat2RC) %>% bind_rows
+     # indicator for if the row then col are on the track
+     ot_row <- curr_state_rc$row + curr_velocity$curr_hor_vel %in% state_rc_inds$row
+     ot_col <- curr_state_rc$col + curr_velocity$curr_ver_vel %in% state_rc_inds$col
+      
+     # ** don't think this is right because we want to include going off grid = -1 reward plus
+     # go to starting state. for this should fxalize starting state
+     # if the putative state transition is on the track find the locations of the next row and column
+     if (ot_row & ot_col) {
+       next_row <- curr_state_rc$row + curr_velocity$curr_hor_vel
+       next_col <- curr_state_rc$col + curr_velocity$curr_ver_vel
+     } else if (ot_row | ot_col) {
+     # if only one is on track, find its row and column   
+       if (!ot_row) next_row <- curr_state_rc$row + curr_velocity$curr_hor_vel
+       if (!ot_col) next_col <- curr_state_rc$col + curr_velocity$curr_ver_vel
+     }
+     # for any not on track, set to max boundary
+     if (!ot_col) next_row <- max(state_rc_inds$col)
+     if (!ot_row) next_col <- max(state_rc_ind$row)  
+       
+     next_state <- list("r"=next_row, "c"=next_col)
+     
+     # Determine reward and if state transition is to a terminal state
+     state_type <- track[next_row, next_col]
+     
+     # finish state
+     if (state_type == 2) { reward <- 0; terminal <- 1 }
+     # intermed state of start state
+     if (state_type == 1 | state_type == 0) { reward <- -1; terminal <- 0 }
+        
+list("ns"=next_state, "nha"=next_hor_act, "nva"=next_ver_act, "rew"=reward, "vel"=velocity, "T"=terminal)   
 }
 SelectActionIncrVelocity <- function(dir_as_string, 
-                                          velocity_this_dir,
-                                          t,
-                                          incr_vel_0=0) {
+                                     velocity_this_dir,
+                                     t,
+                                     incr_vel_0=0) {
+  
        ### Select horizontal / vertical action and increment velocity based on policy 
        # and s.t. constraints (see below) ###
        
        # velocity in any direction be nonnegative and can't exceed 5 and both velocities can't be 0  for
        # any state other than a starting state ###
        
-       # find cumulative probabilities of the 3 actions
+       # Find cumulative probabilities of the 3 actions
        cum_probs <- cumsum(as.numeric(policy %>% 
                            filter(row==curr_state_rc$row & col==curr_state_rc$col) %>% 
                            select(contains(dir_as_string))))
-       # action selected is the first greater than a random number between 0 and 1
+       # Action selected is the first greater than a random number between 0 and 1
        action <- which(cum_probs > runif(1, 0, 1))[1]
        
-       # only change velocity if  this indicator set to 0
+       # Only change velocity if this indicator set to 0
        if (!incr_vel_0) {
           velocity_this_dir <- velocity_this_dir + action
          
          # Apply constraints:
-         # Must be nonnegative..
+         # must be nonnegative..
          if (velocity_this_dir < 0) { action <- 0; velocity_this_dir <- 0 } 
          # .. and less than 5
          if (velocity_this_dir > 5) { action <- 0; velocity_this_dir <- 5 } 
@@ -185,17 +240,14 @@ SelectActionIncrVelocity <- function(dir_as_string,
      list("a"=action, "v"=velocity_this_dir)   
 }
 GenerateEpisode <- function(
-                             # always initialize S_0 to starting states bc they're what we want 
-                             # to derive policy for
+                             # always initialize S_0 to starting states 
+                             # bc those're what we want to find opt policies for
                              states_0, 
                              finish_inds,
                              actions_0, # 1 row data frame of horizontal, vertical actions
-                             # track to find matrix indices of subsequent states 
-                             track, 
-                             # policy to follow after initial actions
-                             policy, 
-                             # length of episode if boundary isn't reached first
-                             time_steps=15,
+                             track, # track to find matrix indices of subsequent states 
+                             policy, # policy to follow after initial actions
+                             time_steps=15, # length of episode if boundary isn't reached first
                              noise_velocity=.1, # if nonzero, add this much noise to velocity
                              quiet=0
                              ) {
@@ -210,43 +262,25 @@ GenerateEpisode <- function(
                          'velocity'=rep(NA, time_steps))
    
    
-   # set current state and actions to S_0 and A_0s
+   # Set current state and actions to S_0 and A_0s
    t <- 1 # time step
    velocity <- 0
-   # pick current state randomly from set of starting states
+   # Pick current state randomly from set of starting states
    curr_state <- states_0[runif(1, 0, length(states_0))]
    curr_hor_act <- actions_0$hor
    curr_ver_act <- actions_0$ver
    curr_velocity <- list("hor"=0, "ver"=0) # initialize at 0 velocity
    
    terminal <- 0
-   # continue generating episode until a terminal state is reached or time steps run out
+   # Continue generating episode until a terminal state is reached or time steps run out
    while (terminal == 0 & t < time_steps) {
-     # get row, column representation of state
-     curr_state_rc <- curr_state_rc <- CMat2RC(curr_state) 
      
-     # indicator to increment velocity 0 irrespective action cohosen
-     incr_vel_0 <- ifelse(runif(1, 0, 1) < noise_velocity, 1, 0)
-     if (t == 1) {
-       hor_av <- SelectAction("hor", curr_velocity$hor, t, incr_vel_0)
-       ver_av <- SelectAction("ver", curr_velocity$ver, t, incr_vel_0)
-       curr_actions <- list("curr_hor_act"=hor_av$a, "curr_ver_act"=ver_av$a)
-       curr_velocity <- list("curr_hor_vel"=hor_av$v, "curr_ver_vel"=ver_av$v)
-       # velocity
-     } else {
-       # enforce constraint of at least 1 velocity greater than 0
-       while (all(curr_velocity)==0) {
-         hor_av <- SelectAction("hor", curr_velocity$hor, t)
-         ver_av <- SelectAction("ver", curr_velocity$ver, t)
-         curr_actions <- list("curr_hor_act"=hor_av$a, "curr_ver_act"=ver_av$a)
-         curr_velocity <- list("curr_hor_vel"=hor_av$v, "curr_ver_vel"=ver_av$v)
-       }
-     }
-     
-     SARV <- TransitionSAR(track, 
+     # Get next state, actions, reward, velocities, and if this was a terminal state 
+     SARVT <- TransitionSAR(track, 
                            actions,
                            curr_state,
-                           curr_velocity
+                           curr_velocity,
+                           noise_velocity
                            )
      episode <- UpdateEpisode(t, velocity, curr_state, curr_hor_act, curr_ver_act, episode)
    }
