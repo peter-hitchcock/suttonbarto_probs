@@ -1,0 +1,6 @@
+4.10
+race track prob: 
+- currently debugging & editing way through fxs to generate an episode
+- current issue: SelActIncVel was built to select an action separately for vertical and horizontal, but state
+df defines a policy on an action defined in terms hor, ver. so need to edit it to select both hor,ver in one
+call.
