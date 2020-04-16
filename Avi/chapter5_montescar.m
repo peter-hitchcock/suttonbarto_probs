@@ -5,7 +5,7 @@ clear all
 close all
 
 % import a grid world
-trackbmp = imread('racetracks/track1.bmp');
+trackbmp = imread('racetracks/track2.bmp');
 track = double(trackbmp);
 
 % values for starts/stops/walls/track
@@ -35,7 +35,7 @@ gamma = 0.2;
 alpha = 0.3;
 
 % number of episodes to run
-numeps = 50000;
+numeps = 10000;
 
 % initialize policies, Q's, returns
 policy=randi(9,size(track));
@@ -59,8 +59,8 @@ episodePath = struct;
 
 % reward/cost scheme
 costDrive = -1;
-rewFinish = 1000000;
-costCrash = -1000;
+rewFinish = 0;
+costCrash = 0;
 
 % let's race!
 % run through an episode using random starting position
@@ -70,7 +70,7 @@ for i = 1:numeps
     epX = startX(rstart);
     epY = startY(rstart);
 %     drive car from random starting state
-    [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY,epX,pStall,costDrive,rewFinish,costCrash);
+    [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY,epX,startY,startX,pStall,costDrive,rewFinish,costCrash);
     
 %     go back through episode and learn something from what we did
     G = 0;
@@ -99,7 +99,7 @@ end
 for j = 1:length(startX)
     oX = startX(j);
     oY = startY(j);
-    [t,r,oY,oX,action]=vroom(track,road,wall,finish,start,A,mv,policy,oY,oX,pStall,costDrive,rewFinish,costCrash);
+    [t,r,oY,oX,action]=vroom(track,road,wall,finish,start,A,mv,policy,oY,oX,startY,startX,pStall,costDrive,rewFinish,costCrash);
      %     store trajectory from this episode
     oPath(j).path = [oX,oY];     
 end     
@@ -112,7 +112,7 @@ for j = 1:length(startX)
 end
     
 
-function [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY,epX,pStall,costDrive,rewFinish,costCrash)
+function [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY,epX,startY,startX,pStall,costDrive,rewFinish,costCrash)
     drivin = true;
 %     initialize velocity in x and y
     vx = 0;
@@ -129,7 +129,7 @@ function [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY
        %       get actions
             ay = A{action(t,1)}(1);
             ax = A{action(t,1)}(2);
-        while ~legalaction
+        while ~legalaction 
             if vy+ay < 0 || vx+ax < 0 || (vy+ay == 0 && vx+ax == 0) ...
                     || vy+ay > mv || vx+ax > mv
                 action(t,1) = randi(9);
@@ -170,8 +170,15 @@ function [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY
         
         %         find out if we hit a wall or the finish line
         if track(epY(t+1),epX(t+1)) == wall
-            drivin = false;
-            r(t+1,1) = costCrash;
+            vx = 0;
+            vy = 0;
+            rstart = randperm(length(startY),1);
+            r(t+1,1) = costDrive;
+            epX(t+1,1) = startX(rstart);
+            epY(t+1,1) = startY(rstart);
+            action(t+1,1) = randi(9);
+%             drivin = false;
+%             r(t+1,1) = costCrash;
         elseif track(epY(t+1),epX(t+1)) == finish
             r(t+1,1) = rewFinish;
             drivin = false;
