@@ -87,12 +87,6 @@ for (state in seq_along(locations)) {
 #### Race car problem 5.12
 
 ```{r}
-
-
-```
-
-
-```{r}
 MCSolveRaceTrack()
 ```
 
