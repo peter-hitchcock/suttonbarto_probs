@@ -35,7 +35,7 @@ gamma = 0.2;
 alpha = 0.3;
 
 % number of episodes to run
-numeps = 10000;
+numeps = 50000;
 
 % initialize policies, Q's, returns
 policy=randi(9,size(track));
@@ -120,7 +120,7 @@ function [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY
 %     run through an episode
     t = 1;
     r = costDrive;
-    action = 5;
+    action = randi(9);
     while drivin
         legalaction = false;
 %         find out if the chosen action is legal according to problem
@@ -129,7 +129,7 @@ function [t,r,epY,epX,action]=vroom(track,road,wall,finish,start,A,mv,policy,epY
        %       get actions
             ay = A{action(t,1)}(1);
             ax = A{action(t,1)}(2);
-        while ~legalaction && t > 1
+        while ~legalaction
             if vy+ay < 0 || vx+ax < 0 || (vy+ay == 0 && vx+ax == 0) ...
                     || vy+ay > mv || vx+ax > mv
                 action(t,1) = randi(9);
