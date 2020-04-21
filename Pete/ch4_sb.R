@@ -60,11 +60,6 @@ if (keep_iter_ests) {
     ylab('optimal policy (amt. to stake)') + ylim(0, 100)
 }
 
-## currently has a bug: 
-# - possible reasons why: 
-# not implementing lack of transitions at terminal state loses (instead all 
-# info from win is just propagating back)
-# not sure if v' estimates are done correctly 
 
 
 

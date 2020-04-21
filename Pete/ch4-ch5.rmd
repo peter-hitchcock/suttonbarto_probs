@@ -1,12 +1,15 @@
 ---
-title: "Notebook to start and visualize all problems after Chapter 4"
+title: "Chapters 4 and 5: DP and MC"
 output:
   html_document:
     df_print: paged
 ---
 
-
 ```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=14, fig.height=10) 
+
+
 lapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
 sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
 sf()
@@ -81,6 +84,72 @@ for (state in seq_along(locations)) {
 
 ```
 
+#### Gambler's problem
+
+```{r}
+lapply(c('tidyverse', 'dplyr'), require, character=TRUE)
+sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
+sf()
+DefPlotPars()
+#### 4.9. Gambler's Problem ####
+############################################
+####  INITIALIZATIONS ####
+theta <- 1e-5 # threshold param
+gamma <- 1
+states <- 1:101 # one state for 1:99 capital + 2 terminal states
+p_win <- .15 # probability of winning 
+# initalize state values randomly.. 
+state_values <- runif(length(states), 0, 1)
+#state_values <- rep(0, length(states))
+# .. except for setting terminal states to 0 and 1
+state_values[1] <- 0; state_values[101] <- 1
+quiet <- 0 
+keep_iter_ests <- 1
+############################################
+opt_policy_and_value_fx  <-  RunGamblersProblem(
+                                            p_win, # probability of winning bet
+                                            states, # = capital amounts
+                                            state_values, # iteratively updating state values
+                                            theta, # iteration stopping criterion
+                                            gamma, # discount on V(s)'
+                                            quiet, # print?
+                                            keep_iter_ests # save estimates from all sweeps?
+                                          ) 
+
+# plots for final value and policy estimates
+if (!keep_iter_ests) {
+  ggplot(opt_policy_and_value_fx, aes(x=states, y=state_values)) + 
+    geom_line(size=4, color='gray57') + 
+    ga + ap +
+    ylab('state values')
+  
+  ggplot(opt_policy_and_value_fx[[23]], aes(x=states, y=optimal_policy)) + 
+    geom_point(size=4, alpha=.5) +
+    ga + ap +
+    ylab('optimal policy (amt. to stake)')
+} 
+if (keep_iter_ests) {
+  
+  ov_df <- opt_policy_and_value_fx %>% bind_rows()
+  
+  ggplot(ov_df, aes(x=states, y=state_values, color=as.factor(sweep))) + 
+    geom_line(size=2, alpha=.9) + 
+    ga + ap + 
+    theme(legend.text = element_text(size = 8),
+          legend.title = element_blank(),
+          legend.key.size = unit(.8, 'lines')) +
+    ylab('state values')
+  
+  ggplot(ov_df %>% filter(sweep %in% 94), aes(x=states, y=optimal_policy, color=as.factor(sweep))) + 
+    geom_jitter(size=4, alpha=.6, width=.8, height=.8) +
+    ga + ap + 
+    theme(legend.text = element_text(size = 14),
+          legend.title = element_blank(),
+          legend.key.size = unit(2, 'lines')) +
+    ylab('optimal policy (amt. to stake)') + ylim(0, 100)
+}
+```
+
 
 ## Chapter 5  
 
@@ -89,12 +158,6 @@ for (state in seq_along(locations)) {
 ```{r}
 MCSolveRaceTrack()
 ```
-
-
-
-
-
-
 
 
 

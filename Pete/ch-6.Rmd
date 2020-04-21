@@ -1,0 +1,47 @@
+---
+title: "Chapter 6"
+output: html_notebook
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=14, fig.height=10) 
+
+
+lapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
+sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
+sf()
+DefPlotPars()
+```
+
+# Book notes 
+
+TD learning combines elements of MC and DP in that can learn directly from experience like the former wo a model but bootstrapping like the former. Various formulations can bridge fully between these methods such as n-step methods and TD(lambda).
+
+We've already covered MC. In the past chapter, one update for it was policy eval where:
+Q(s_t, a_t) = average(Returns(s_t, a_t)) and returns were a running list of G, which were in turn updated as
+gamma * G + R_t for eg every visit in the episode.
+
+A good MC value fx estimation for nonstationary environments is
+
+ [ V_{s_t} = V_{s_t} + alpha[G_t - V_{s_t}]. 
+ 
+ me: or for policy eval could write:
+ Q_{s_t, a_t} = Q_{s_t, a_t} + alpha[G_t - Q_{s_t, a_t}]
+
+the key difference to the above update is that it doesn't take the average but uses a learning rate. However, it's still MC because it waits until the end of the episode. 
+
+**The key distinction of TD is that it updates immediately instead of waiting to reach the end of the episode. **
+
+So instead of taking the difference between the full return, G_t, which is the that-episode estimate of the V(s_t) and the estimate, is uses the immediate return + the 
+value of the next state. Given the recursive relationship specified by the Bellman equation, this works because the current state value is nothing but the immeidate reward
+and the next state value. Because the next state value is only an estimate, this is an update based on a guess. Still it converges faster.
+
+The simplest method makes the update
+V_{s_t} = V_{s_t} + alpha[r_t + gamma V_{s_{t+1}} - V_{s_t}]
+
+this is TD(0)
+
+this also gives rise to our first PE: it's the diff between the current estimate V(s_t) and the better estimate R_t + discounted V_{s_{t+1}}}
+
+The 
