@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.width=14, fig.height=10) 
 
 
-lapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
+sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
 sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
 sf()
 DefPlotPars()

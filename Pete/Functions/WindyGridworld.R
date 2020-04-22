@@ -19,7 +19,9 @@ diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
 action_type <- "basic" 
 start_state <- 4
 goal_state <- 53
-non_goal_rewards <- -1 # reward on states other than the goal state
+# Reward for reaching goal / non-goal state
+non_goal_rewards <- -1 
+goal_reward <- 0
 # TO DO: implement softmax and other varieties
 soft_policy <- "eps_greedy"
 if (soft_policy == "eps_greedy") softness <- .1
@@ -34,7 +36,7 @@ if (which_algo=="SARSA") {
     "alpha"=.5, # learning rate
     "gamma"=1, # discount 
     "zero_init_values"=1, # how to inialize q values
-    "policy"="on", # TO DO: edit, others not yet implemented
+    "on_or_off"="on", # TO DO: edit, others not yet implemented
     "soft_policy"=soft_policy
   )
   algo_list <- list("alg"="SARSA", "pars"=pars)
@@ -48,7 +50,8 @@ world_list <- list(
   "action_type"=action_type,
   "start_state"=start_state,
   "goal_state"=goal_state,
-  "ng_rews"=non_goal_rewards
+  "ng_rews"=non_goal_rewards,
+  "g_rew"=goal_reward
 )
 # Package up debug options
 debug_opts <- list("quiet"=quiet)
@@ -66,67 +69,21 @@ SolveWindyGridWorld <- function(world_list,
   if (algo_list$alg=="SARSA") inits <- InitSARSA(world_list, 
                                                  sarsa_list$pars)
   
+                DoEpisode(world_list,
+                          algo_list,
+                          debug_opts,
+                          inits)
+  
   ########################### HELPER FUNCTIONS #########################
   ################################################### END HELPER FUNCTIONS
-  
-  DoEpisode <- function(world_list,
-                        algo_list,
-                        debug_opts) {
-    ### Runs through a single episode ###
     
-    ########################### GENERAL INITS ############################
-    world <- world_list$grid_world
-    Q_SA_mat <- inits$Q_SA_mat
-    ng_rew <- world_list$ng_rews
-    goal_state <- world_list$goal_state
-    windy_states <- world_list$windy_states
-    # Find the windy columns
-    windy_columns <- which(winds != 0)
-    reward_list <- list()
-    ######################################################################
-    ########################### START EPISODE #############################
-    state <- world_list$start_state 
     
-    # Continue episode until end state is reached or hit 1e10 time steps
-    while (state != goal_state | ts < 1e10) {
-      
-      if (algo_list$alg == "SARSA") {
-        # Extract information for this state 
-        Q_sA_info <- Q_SA_mat %>% filter(s == state) 
-        # Softly select an action following policy 
-        action <- SoftSelect(algo_list, Q_sA_info, debug_opts)
-        # Find new state if was only determined by agent move
-        agent_move <- state+action
-        if (any(agent_move %in% windy_states)) {
-          names(windy_states)[which(agent_move==windy_states, arr.ind=TRUE)[, 2]]
-          put_new_state <- agent_move + winds
-        }
-        
-        
-        
-         
-        # If this would take us outside the gridworld..
-        if (!put_new_state %in% world) {
-          # State stays the same but 
-          r
-        }
-        
-        
-        
-        
-      }
-      
-      ts <- ts+1 # increment time step
-      
-    }
-    ######################################################################
     
-    # Notes: ###
-  }
+}
     
     
 
-}
+
 ########################### WORLD FUNCTIONS ###########################
 CreateWindyGridworld <- function(rows=7, columns=10) {
   ### Returns a gridworld incl optional args if want to use 
@@ -135,6 +92,90 @@ CreateWindyGridworld <- function(rows=7, columns=10) {
 world  
 }
 ######################################################################
+DoEpisode <- function(world_list,
+                      algo_list,
+                      debug_opts,
+                      inits) {
+  ### Runs through a single episode ###
+  
+  ########################### GENERAL INITS ############################
+  world <- world_list$grid_world
+  Q_SA_mat <- inits$Q_SA_mat
+  ng_rew <- world_list$ng_rews
+  g_rew <- world_list$g_rew
+  goal_state <- world_list$goal_state
+  windy_states <- world_list$windy_states
+  gamma <- algo_list$pars$gamma
+  alpha <- algo_list$pars$alpha
+  reward_list <- list()
+  state_list <- list()
+  ######################################################################
+  ########################### START EPISODE #############################
+  state <- world_list$start_state 
+  t_step <- 1
+  
+  # Continue episode until end state is reached or hit 1e10 time steps
+  while (state != goal_state | t_step < 1e10) {
+    
+    if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
+      action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
+    }
+    
+    # Find what state would be if it was only determined by agent move
+    agent_move <- state+action
+    
+    ## Add wind
+    # If this is a windy state..
+    if (any(agent_move %in% windy_states)) {
+      # .. find how much wind to add by referencing the column name in 
+      # windy_states.. 
+      # TO DO: add stochastic option
+      wind <- as.numeric(names(windy_states)[which(agent_move==windy_states, 
+                                                   arr.ind=TRUE)[, 2]])
+      # and add it onto putative new state
+      put_new_state <- agent_move + wind
+    } else {
+      # Otherwise putative new state is just state + action
+      put_new_state <- agent_move
+    } ## END ADD WIND
+    
+    ## Find s',r
+    # If the putative new state is the goal state then just assign final state and reward=0
+    if (put_new_state == goal_state) {
+      reward <- g_rew
+      # If not the goal state..
+    } else {
+      # .. and would take us off the grid .. 
+      if (!put_new_state %in% world) {
+        # .. don't change state but do assign reward .. 
+        reward <- ng_rew
+        s_prime <- state
+      } else {
+        # .. change state and assign reward
+        reward <- ng_rew
+        s_prime <- put_new_state 
+      }
+    } # END ADVANCE s', r ADVANCE
+    
+    if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
+      a_prime <- SelActOnPolicySARSA(Q_sA_mat, state=s_prime)
+    }
+    
+    if (algo_list$alg == "SARSA") {
+      Q_SA_mat <- SARSAUpdateQSA(Q_SA_mat,
+                                 action, state, a_prime, s_prime,
+                                 reward, gamma, alpha)
+    }
+    
+    ## Bookkeeping and state advance before episode ends
+    reward_list[[t_step]] <- reward
+    state_list[[t_step+1]] <- s_prime  
+    state <- s_prime 
+    
+    t_step <- t_step+1 # increment time step
+    
+  } # END EPISODE LOOP
+}
 ########################### GENERAL RL FUNCTIONS #####################
 SoftSelect <- function(
   algo_list, 
@@ -165,6 +206,7 @@ action
 }
 ######################################################################
 ############### ALGORITHM SPECIFIC RL FUNCTIONS ######################
+## SARSA ##
 InitSARSA <- function(world_list,
                       pars) {
   ### Initializations for SARSA ###
@@ -179,12 +221,12 @@ InitSARSA <- function(world_list,
                           "a"=world_list$base_actions)
   # .. and either set values to 0..
   if (as.numeric(pars["zero_init_values"])) {
-    Q_SA_mat$values <- rep(0, nrow(Q_SA_mat)) 
+    Q_SA_mat$value <- rep(0, nrow(Q_SA_mat)) 
   } else { 
     # .. or as randomly initialized .. #
-    Q_SA_mat$values <- runif(nrow(Q_SA_mat), 0, 1) 
-    # .. but set terminal state values to 0
-    Q_SA_mat[Q_SA_mat$s == world_list$goal_state, ]$values <- 0
+    Q_SA_mat$value <- runif(nrow(Q_SA_mat), 0, 1) 
+    # .. but set terminal state value to 0
+    Q_SA_mat[Q_SA_mat$s == world_list$goal_state, ]$value <- 0
   }
   
   # Start with equiprobable policy
@@ -197,12 +239,43 @@ InitSARSA <- function(world_list,
   
 sarsa_inits  
 }
+SARSAUpdateQSA <- function(Q_SA_mat,
+                           action,
+                           state,
+                           a_prime,
+                           s_prime,
+                           reward,
+                           gamma,
+                           alpha) {
+  ### Update Q(SA_t) using SARS'A', return Q_SA_mat ###
+  
+  # Extract Q(S, A) and Q(S', A')
+  QSA_val <- Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, ]$value
+  QSprApr_val <- Q_SA_mat[Q_SA_mat$s == s_prime & Q_SA_mat$a == a_prime, ]$value
+  
+  # Update Q(S, A) value in dataframe
+  Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
+    QSA_val + alpha * (reward + gamma * QSprApr_val - QSA_val)
+  
+  Q_SA_mat  
+}
+SelActOnPolicySARSA <- function(Q_sA_mat, state) {
+  ### Select an on-policy action|state following p. 130 SARSA algo ###
+  
+  # Extract information for this state 
+  Q_sA_info <- Q_SA_mat %>% filter(s == state)
+  # Softly select an action following policy 
+  action <- SoftSelect(algo_list, Q_sA_info, debug_opts)
+  
+action    
+}
+## END SARSA ##
 ######################################################################
 
 
 
 
-SolveWindyGridWorld(world_list)
+SolveWindyGridWorld(world_list, algo_list)
 
 
 
