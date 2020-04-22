@@ -16,32 +16,53 @@ DefPlotPars()
 
 # Book notes 
 
-TD learning combines elements of MC and DP in that can learn directly from experience like the former wo a model but bootstrapping like the former. Various formulations can bridge fully between these methods such as n-step methods and TD(lambda).
+TD learning combines elements of MC and DP in that can learn directly from experience like the former wo a model but bootstrapping like the former. Various formulations can bridge fully between these methods such as n-step methods and $TD(\lambda)$.  
 
 We've already covered MC. In the past chapter, one update for it was policy eval where:
-Q(s_t, a_t) = average(Returns(s_t, a_t)) and returns were a running list of G, which were in turn updated as
-gamma * G + R_t for eg every visit in the episode.
+$Q(s_t, a_t) = average(Returns(s_t, a_t))$ and returns were a running list of G, which were in turn updated as
+$\gamma G + R_t$ for eg every visit in the episode.  
 
-A good MC value fx estimation for nonstationary environments is
+A good MC value fx estimate for nonstationary environments is  
 
- [ V_{s_t} = V_{s_t} + alpha[G_t - V_{s_t}]. 
+$$V(S_t) = V(S_t) + \alpha[G_t - V(S_t)]$$
  
- me: or for policy eval could write:
- Q_{s_t, a_t} = Q_{s_t, a_t} + alpha[G_t - Q_{s_t, a_t}]
+ me: or for action values I think would write  
+ 
+ $$Q(S_t, A_t) = Q(S_t, A_t) + \alpha[G_t - Q(S_t, A_t)$$
+ 
+The key difference with the earlier MC update rules presented for stationary environments is that instead of taking an unweighted average is uses a learning rate update and so is more myopic with higher $\alpha$ which presumably makes it better for nonstationary environments. However, it's still MC because it waits until the end of the episode to do any udpating to the value estimate.  
 
-the key difference to the above update is that it doesn't take the average but uses a learning rate. However, it's still MC because it waits until the end of the episode. 
+## TD(0)
 
-**The key distinction of TD is that it updates immediately instead of waiting to reach the end of the episode. **
+**The key distinction of TD is that it updates immediately instead of waiting to reach the end of the episode.**  
 
-So instead of taking the difference between the full return, G_t, which is the that-episode estimate of the V(s_t) and the estimate, is uses the immediate return + the 
-value of the next state. Given the recursive relationship specified by the Bellman equation, this works because the current state value is nothing but the immeidate reward
-and the next state value. Because the next state value is only an estimate, this is an update based on a guess. Still it converges faster.
+Instead of taking the difference between the full return $G_t$ which is the that-episode estimate of $V(S_t)$ and the info learned before the episode, it uses the immediate reward + the value of the next state. That this can replace using counting up and averaging all the subsequent returns (as in MC) comes from the recursive unrolling of the Bellman eqn from which we learned that the curren state estimate is nothing more than the immediate reward and next state value. Because the next state value is often only an estimate, this is an update based on a guess. The advantage of TD methods come from that guess still being better than having to wait until all the data are in to start guessing in the right direction.  
 
-The simplest method makes the update
-V_{s_t} = V_{s_t} + alpha[r_t + gamma V_{s_{t+1}} - V_{s_t}]
+The simplest TD method $TD(0)$ uses the update
 
-this is TD(0)
+$$V(S_t) = V(S_t) + \alpha[r_{t+1} + \gamma V(s_{t+1}) - V(s_t)] $$
 
-this also gives rise to our first PE: it's the diff between the current estimate V(s_t) and the better estimate R_t + discounted V_{s_{t+1}}}
 
-The 
+
+this also gives rise to our first PE: 
+
+$$ \delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t) $$
+A Markov Reward Process is an MDP without actions (me: ie. Pavlovian?). They're often useful for prediction problems.  
+
+## SARSA  
+
+Moving to focus on using TD estimates for the control problem. This follows the same Generalized Policy Iteration framework as before just using TD for eval/prediction. Now instead of estimating state values we want to estimates action values. For evaluating a policy via an on-policy method we try to estimate $q_{\pi}(s,a)$. We've already talked about how to estimate state values and this turns out to be basically the same; rewards always interleave transitions so it's just S-R-S' vs SA-R-S'A' that we use for updates. SARSA is so-called because it uses the whole latter quintuple for updates  
+
+$$ Q(S_t, A_t) = Q(S_t, A_t) + \alpha[r_t + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t, A_t)] $$
+
+
+
+
+
+
+
+
+
+
+
+

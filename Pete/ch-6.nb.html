@@ -1751,36 +1751,89 @@ summary {
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxua25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKVxua25pdHI6Om9wdHNfY2h1bmskc2V0KGZpZy53aWR0aD0xNCwgZmlnLmhlaWdodD0xMCkgXG5cblxubGFwcGx5KGMoJ3RpZHl2ZXJzZScsICdkcGx5cicsICdwcm9mdmlzJyksIHJlcXVpcmUsIGNoYXJhY3Rlcj1UUlVFKVxuc2YgPC0gZnVuY3Rpb24oKSBzYXBwbHkocGFzdGUwKCcuL0Z1bmN0aW9ucy8nLCBsaXN0LmZpbGVzKCcuL0Z1bmN0aW9ucy8nKSksIHNvdXJjZSlcbnNmKClcbkRlZlBsb3RQYXJzKClcbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxua25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKVxua25pdHI6Om9wdHNfY2h1bmskc2V0KGZpZy53aWR0aD0xNCwgZmlnLmhlaWdodD0xMCkgXG5cblxubGFwcGx5KGMoJ3RpZHl2ZXJzZScsICdkcGx5cicsICdwcm9mdmlzJyksIHJlcXVpcmUsIGNoYXJhY3Rlcj1UUlVFKVxuYGBgIn0= -->
 <pre class="r"><code>knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.width=14, fig.height=10) 
 
 
-lapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
-sf &lt;- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
-sf()
-DefPlotPars()</code></pre>
+lapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiB0aWR5dmVyc2VcblJlZ2lzdGVyZWQgUzMgbWV0aG9kIG92ZXJ3cml0dGVuIGJ5ICdkcGx5cic6XG4gIG1ldGhvZCAgICAgICAgICAgZnJvbVxuICBwcmludC5yb3d3aXNlX2RmICAgICBcblJlZ2lzdGVyZWQgUzMgbWV0aG9kcyBvdmVyd3JpdHRlbiBieSAnZGJwbHlyJzpcbiAgbWV0aG9kICAgICAgICAgZnJvbVxuICBwcmludC50YmxfbGF6eSAgICAgXG4gIHByaW50LnRibF9zcWwgICAgICBcblx1MDAxYlszN23ilIDilIAgXHUwMDFiWzFtQXR0YWNoaW5nIHBhY2thZ2VzXHUwMDFiWzIybSDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIAgdGlkeXZlcnNlIDEuMy4wIOKUgOKUgFx1MDAxYlszOW1cblx1MDAxYlszN21cdTAwMWJbMzJt4pyTXHUwMDFiWzM3bSBcdTAwMWJbMzRtZ2dwbG90Mlx1MDAxYlszN20gMy4yLjEgICAgIFx1MDAxYlszMm3inJNcdTAwMWJbMzdtIFx1MDAxYlszNG1wdXJyciAgXHUwMDFiWzM3bSAwLjMuM1xuXHUwMDFiWzMybeKck1x1MDAxYlszN20gXHUwMDFiWzM0bXRpYmJsZSBcdTAwMWJbMzdtIDIuMS4zICAgICBcdTAwMWJbMzJt4pyTXHUwMDFiWzM3bSBcdTAwMWJbMzRtZHBseXIgIFx1MDAxYlszN20gMC44LjNcblx1MDAxYlszMm3inJNcdTAwMWJbMzdtIFx1MDAxYlszNG10aWR5ciAgXHUwMDFiWzM3bSAxLjAuMCAgICAgXHUwMDFiWzMybeKck1x1MDAxYlszN20gXHUwMDFiWzM0bXN0cmluZ3JcdTAwMWJbMzdtIDEuNC4wXG5cdTAwMWJbMzJt4pyTXHUwMDFiWzM3bSBcdTAwMWJbMzRtcmVhZHIgIFx1MDAxYlszN20gMS4zLjEgICAgIFx1MDAxYlszMm3inJNcdTAwMWJbMzdtIFx1MDAxYlszNG1mb3JjYXRzXHUwMDFiWzM3bSAwLjQuMFx1MDAxYlszOW1cblx1MDAxYlszN23ilIDilIAgXHUwMDFiWzFtQ29uZmxpY3RzXHUwMDFiWzIybSDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIAgdGlkeXZlcnNlX2NvbmZsaWN0cygpIOKUgOKUgFxuXHUwMDFiWzMxbXhcdTAwMWJbMzdtIFx1MDAxYlszNG1kcGx5clx1MDAxYlszN206Olx1MDAxYlszMm1maWx0ZXIoKVx1MDAxYlszN20gbWFza3MgXHUwMDFiWzM0bXN0YXRzXHUwMDFiWzM3bTo6ZmlsdGVyKClcblx1MDAxYlszMW14XHUwMDFiWzM3bSBcdTAwMWJbMzRtZHBseXJcdTAwMWJbMzdtOjpcdTAwMWJbMzJtbGFnKClcdTAwMWJbMzdtICAgIG1hc2tzIFx1MDAxYlszNG1zdGF0c1x1MDAxYlszN206OmxhZygpXHUwMDFiWzM5bVxuTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBwcm9mdmlzXG5SZWdpc3RlcmVkIFMzIG1ldGhvZCBvdmVyd3JpdHRlbiBieSAnaHRtbHdpZGdldHMnOlxuICBtZXRob2QgICAgICAgICAgIGZyb20gICAgICAgICBcbiAgcHJpbnQuaHRtbHdpZGdldCB0b29sczpyc3R1ZGlvXG4ifQ== -->
+<pre><code>Loading required package: tidyverse
+Registered S3 method overwritten by 'dplyr':
+  method           from
+  print.rowwise_df     
+Registered S3 methods overwritten by 'dbplyr':
+  method         from
+  print.tbl_lazy     
+  print.tbl_sql      
+[37m── [1mAttaching packages[22m ────────────────────────────────────────────────────────────────────────── tidyverse 1.3.0 ──[39m
+[37m[32m✓[37m [34mggplot2[37m 3.2.1     [32m✓[37m [34mpurrr  [37m 0.3.3
+[32m✓[37m [34mtibble [37m 2.1.3     [32m✓[37m [34mdplyr  [37m 0.8.3
+[32m✓[37m [34mtidyr  [37m 1.0.0     [32m✓[37m [34mstringr[37m 1.4.0
+[32m✓[37m [34mreadr  [37m 1.3.1     [32m✓[37m [34mforcats[37m 0.4.0[39m
+[37m── [1mConflicts[22m ───────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+[31mx[37m [34mdplyr[37m::[32mfilter()[37m masks [34mstats[37m::filter()
+[31mx[37m [34mdplyr[37m::[32mlag()[37m    masks [34mstats[37m::lag()[39m
+Loading required package: profvis
+Registered S3 method overwritten by 'htmlwidgets':
+  method           from         
+  print.htmlwidget tools:rstudio</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiW1sxXV1cblsxXSBUUlVFXG5cbltbMl1dXG5bMV0gVFJVRVxuXG5bWzNdXVxuWzFdIFRSVUVcbiJ9 -->
+<pre><code>[[1]]
+[1] TRUE
+
+[[2]]
+[1] TRUE
+
+[[3]]
+[1] TRUE</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2YgPC0gZnVuY3Rpb24oKSBzYXBwbHkocGFzdGUwKCcuL0Z1bmN0aW9ucy8nLCBsaXN0LmZpbGVzKCcuL0Z1bmN0aW9ucy8nKSksIHNvdXJjZSlcbnNmKClcbmBgYCJ9 -->
+<pre class="r"><code>sf &lt;- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
+sf()</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiICAgICAgICAuL0Z1bmN0aW9ucy9HYW1ibGVyc1Byb2JsZW1fNC05LlIgLi9GdW5jdGlvbnMvTUNTb2x2ZVJhY2VUcmFja181LTUuUiAuL0Z1bmN0aW9ucy9VdGlscy5SXG52YWx1ZSAgID8gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgID8gICAgICAgICAgICAgICAgICBcbnZpc2libGUgRkFMU0UgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEZBTFNFICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgRkFMU0UgICAgICAgICAgICAgIFxuICAgICAgICAuL0Z1bmN0aW9ucy9XaW5keUdyaWR3b3JsZC5SXG52YWx1ZSAgIExpc3QsOSAgICAgICAgICAgICAgICAgICAgICBcbnZpc2libGUgVFJVRSAgICAgICAgICAgICAgICAgICAgICAgIFxuIn0= -->
+<pre><code>        ./Functions/GamblersProblem_4-9.R ./Functions/MCSolveRaceTrack_5-5.R ./Functions/Utils.R
+value   ?                                 ?                                  ?                  
+visible FALSE                             FALSE                              FALSE              
+        ./Functions/WindyGridworld.R
+value   List,9                      
+visible TRUE                        </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuRGVmUGxvdFBhcnMoKVxuYGBgIn0= -->
+<pre class="r"><code>DefPlotPars()</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <div id="book-notes" class="section level1">
 <h1>Book notes</h1>
-<p>TD learning combines elements of MC and DP in that can learn directly from experience like the former wo a model but bootstrapping like the former. Various formulations can bridge fully between these methods such as n-step methods and TD(lambda).</p>
-<p>We’ve already covered MC. In the past chapter, one update for it was policy eval where: Q(s_t, a_t) = average(Returns(s_t, a_t)) and returns were a running list of G, which were in turn updated as gamma * G + R_t for eg every visit in the episode.</p>
-<p>A good MC value fx estimation for nonstationary environments is</p>
-<p>[ V_{s_t} = V_{s_t} + alpha[G_t - V_{s_t}].</p>
-<p>me: or for policy eval could write: Q_{s_t, a_t} = Q_{s_t, a_t} + alpha[G_t - Q_{s_t, a_t}]</p>
-<p>the key difference to the above update is that it doesn’t take the average but uses a learning rate. However, it’s still MC because it waits until the end of the episode.</p>
-<p><strong>The key distinction of TD is that it updates immediately instead of waiting to reach the end of the episode. </strong></p>
-<p>So instead of taking the difference between the full return, G_t, which is the that-episode estimate of the V(s_t) and the estimate, is uses the immediate return + the value of the next state. Given the recursive relationship specified by the Bellman equation, this works because the current state value is nothing but the immeidate reward and the next state value. Because the next state value is only an estimate, this is an update based on a guess. Still it converges faster.</p>
-<p>The simplest method makes the update V_{s_t} = V_{s_t} + alpha[r_t + gamma V_{s_{t+1}} - V_{s_t}]</p>
-<p>this is TD(0)</p>
-<p>this also gives rise to our first PE: it’s the diff between the current estimate V(s_t) and the better estimate R_t + discounted V_{s_{t+1}}}</p>
-<p>The</p>
+<p>TD learning combines elements of MC and DP in that can learn directly from experience like the former wo a model but bootstrapping like the former. Various formulations can bridge fully between these methods such as n-step methods and <span class="math inline">\(TD(\lambda)\)</span>.</p>
+<p>We’ve already covered MC. In the past chapter, one update for it was policy eval where: <span class="math inline">\(Q(s_t, a_t) = average(Returns(s_t, a_t))\)</span> and returns were a running list of G, which were in turn updated as <span class="math inline">\(\gamma G + R_t\)</span> for eg every visit in the episode.</p>
+<p>A good MC value fx estimate for nonstationary environments is</p>
+<p><span class="math display">\[V(S_t) = V(S_t) + \alpha[G_t - V(S_t)]\]</span></p>
+<p>me: or for action values I think would write</p>
+<p><span class="math display">\[Q(S_t, A_t) = Q(S_t, A_t) + \alpha[G_t - Q(S_t, A_t)\]</span></p>
+<p>The key difference with the earlier MC update rules presented for stationary environments is that instead of taking an unweighted average is uses a learning rate update and so is more myopic with higher <span class="math inline">\(\alpha\)</span> which presumably makes it better for nonstationary environments. However, it’s still MC because it waits until the end of the episode to do any udpating to the value estimate.</p>
+<div id="td0" class="section level2">
+<h2>TD(0)</h2>
+<p><strong>The key distinction of TD is that it updates immediately instead of waiting to reach the end of the episode.</strong></p>
+<p>Instead of taking the difference between the full return <span class="math inline">\(G_t\)</span> which is the that-episode estimate of <span class="math inline">\(V(S_t)\)</span> and the info learned before the episode, it uses the immediate reward + the value of the next state. That this can replace using counting up and averaging all the subsequent returns (as in MC) comes from the recursive unrolling of the Bellman eqn from which we learned that the curren state estimate is nothing more than the immediate reward and next state value. Because the next state value is often only an estimate, this is an update based on a guess. The advantage of TD methods come from that guess still being better than having to wait until all the data are in to start guessing in the right direction.</p>
+<p>The simplest TD method <span class="math inline">\(TD(0)\)</span> uses the update</p>
+<p><span class="math display">\[V(S_t) = V(S_t) + \alpha[r_{t+1} + \gamma V(s_{t+1}) - V(s_t)] \]</span></p>
+<p>this also gives rise to our first PE:</p>
+<p><span class="math display">\[ \delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t) \]</span> A Markov Reward Process is an MDP without actions (me: ie. Pavlovian?). They’re often useful for prediction problems.</p>
+</div>
+<div id="sarsa" class="section level2">
+<h2>SARSA</h2>
+<p>Moving to focus on using TD estimates for the control problem. This follows the same Generalized Policy Iteration framework as before just using TD for eval/prediction. Now instead of estimating state values we want to estimates action values. For evaluating a policy via an on-policy method we try to estimate <span class="math inline">\(q_{\pi}(s,a)\)</span>. We’ve already talked about how to estimate state values and this turns out to be basically the same; rewards always interleave transitions so it’s just S-R-S’ vs SA-R-S’A’ that we use for updates. SARSA is so-called because it uses the whole latter quintuple for updates</p>
+<p><span class="math display">\[ Q(S_t, A_t) = Q(S_t, A_t) + \alpha[r_t + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t, A_t)] \]</span></p>
 <!-- rnb-text-end -->
 </div>
+</div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ2hhcHRlciA2IgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgpgYGB7ciBzZXR1cH0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKQprbml0cjo6b3B0c19jaHVuayRzZXQoZmlnLndpZHRoPTE0LCBmaWcuaGVpZ2h0PTEwKSAKCgpsYXBwbHkoYygndGlkeXZlcnNlJywgJ2RwbHlyJywgJ3Byb2Z2aXMnKSwgcmVxdWlyZSwgY2hhcmFjdGVyPVRSVUUpCnNmIDwtIGZ1bmN0aW9uKCkgc2FwcGx5KHBhc3RlMCgnLi9GdW5jdGlvbnMvJywgbGlzdC5maWxlcygnLi9GdW5jdGlvbnMvJykpLCBzb3VyY2UpCnNmKCkKRGVmUGxvdFBhcnMoKQpgYGAKCiMgQm9vayBub3RlcyAKClREIGxlYXJuaW5nIGNvbWJpbmVzIGVsZW1lbnRzIG9mIE1DIGFuZCBEUCBpbiB0aGF0IGNhbiBsZWFybiBkaXJlY3RseSBmcm9tIGV4cGVyaWVuY2UgbGlrZSB0aGUgZm9ybWVyIHdvIGEgbW9kZWwgYnV0IGJvb3RzdHJhcHBpbmcgbGlrZSB0aGUgZm9ybWVyLiBWYXJpb3VzIGZvcm11bGF0aW9ucyBjYW4gYnJpZGdlIGZ1bGx5IGJldHdlZW4gdGhlc2UgbWV0aG9kcyBzdWNoIGFzIG4tc3RlcCBtZXRob2RzIGFuZCBURChsYW1iZGEpLgoKV2UndmUgYWxyZWFkeSBjb3ZlcmVkIE1DLiBJbiB0aGUgcGFzdCBjaGFwdGVyLCBvbmUgdXBkYXRlIGZvciBpdCB3YXMgcG9saWN5IGV2YWwgd2hlcmU6ClEoc190LCBhX3QpID0gYXZlcmFnZShSZXR1cm5zKHNfdCwgYV90KSkgYW5kIHJldHVybnMgd2VyZSBhIHJ1bm5pbmcgbGlzdCBvZiBHLCB3aGljaCB3ZXJlIGluIHR1cm4gdXBkYXRlZCBhcwpnYW1tYSAqIEcgKyBSX3QgZm9yIGVnIGV2ZXJ5IHZpc2l0IGluIHRoZSBlcGlzb2RlLgoKQSBnb29kIE1DIHZhbHVlIGZ4IGVzdGltYXRpb24gZm9yIG5vbnN0YXRpb25hcnkgZW52aXJvbm1lbnRzIGlzCgogWyBWX3tzX3R9ID0gVl97c190fSArIGFscGhhW0dfdCAtIFZfe3NfdH1dLiAKIAogbWU6IG9yIGZvciBwb2xpY3kgZXZhbCBjb3VsZCB3cml0ZToKIFFfe3NfdCwgYV90fSA9IFFfe3NfdCwgYV90fSArIGFscGhhW0dfdCAtIFFfe3NfdCwgYV90fV0KCnRoZSBrZXkgZGlmZmVyZW5jZSB0byB0aGUgYWJvdmUgdXBkYXRlIGlzIHRoYXQgaXQgZG9lc24ndCB0YWtlIHRoZSBhdmVyYWdlIGJ1dCB1c2VzIGEgbGVhcm5pbmcgcmF0ZS4gSG93ZXZlciwgaXQncyBzdGlsbCBNQyBiZWNhdXNlIGl0IHdhaXRzIHVudGlsIHRoZSBlbmQgb2YgdGhlIGVwaXNvZGUuIAoKKipUaGUga2V5IGRpc3RpbmN0aW9uIG9mIFREIGlzIHRoYXQgaXQgdXBkYXRlcyBpbW1lZGlhdGVseSBpbnN0ZWFkIG9mIHdhaXRpbmcgdG8gcmVhY2ggdGhlIGVuZCBvZiB0aGUgZXBpc29kZS4gKioKClNvIGluc3RlYWQgb2YgdGFraW5nIHRoZSBkaWZmZXJlbmNlIGJldHdlZW4gdGhlIGZ1bGwgcmV0dXJuLCBHX3QsIHdoaWNoIGlzIHRoZSB0aGF0LWVwaXNvZGUgZXN0aW1hdGUgb2YgdGhlIFYoc190KSBhbmQgdGhlIGVzdGltYXRlLCBpcyB1c2VzIHRoZSBpbW1lZGlhdGUgcmV0dXJuICsgdGhlIAp2YWx1ZSBvZiB0aGUgbmV4dCBzdGF0ZS4gR2l2ZW4gdGhlIHJlY3Vyc2l2ZSByZWxhdGlvbnNoaXAgc3BlY2lmaWVkIGJ5IHRoZSBCZWxsbWFuIGVxdWF0aW9uLCB0aGlzIHdvcmtzIGJlY2F1c2UgdGhlIGN1cnJlbnQgc3RhdGUgdmFsdWUgaXMgbm90aGluZyBidXQgdGhlIGltbWVpZGF0ZSByZXdhcmQKYW5kIHRoZSBuZXh0IHN0YXRlIHZhbHVlLiBCZWNhdXNlIHRoZSBuZXh0IHN0YXRlIHZhbHVlIGlzIG9ubHkgYW4gZXN0aW1hdGUsIHRoaXMgaXMgYW4gdXBkYXRlIGJhc2VkIG9uIGEgZ3Vlc3MuIFN0aWxsIGl0IGNvbnZlcmdlcyBmYXN0ZXIuCgpUaGUgc2ltcGxlc3QgbWV0aG9kIG1ha2VzIHRoZSB1cGRhdGUKVl97c190fSA9IFZfe3NfdH0gKyBhbHBoYVtyX3QgKyBnYW1tYSBWX3tzX3t0KzF9fSAtIFZfe3NfdH1dCgp0aGlzIGlzIFREKDApCgp0aGlzIGFsc28gZ2l2ZXMgcmlzZSB0byBvdXIgZmlyc3QgUEU6IGl0J3MgdGhlIGRpZmYgYmV0d2VlbiB0aGUgY3VycmVudCBlc3RpbWF0ZSBWKHNfdCkgYW5kIHRoZSBiZXR0ZXIgZXN0aW1hdGUgUl90ICsgZGlzY291bnRlZCBWX3tzX3t0KzF9fX0KClRoZSA=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ2hhcHRlciA2IgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgpgYGB7ciBzZXR1cH0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKQprbml0cjo6b3B0c19jaHVuayRzZXQoZmlnLndpZHRoPTE0LCBmaWcuaGVpZ2h0PTEwKSAKCgpsYXBwbHkoYygndGlkeXZlcnNlJywgJ2RwbHlyJywgJ3Byb2Z2aXMnKSwgcmVxdWlyZSwgY2hhcmFjdGVyPVRSVUUpCnNmIDwtIGZ1bmN0aW9uKCkgc2FwcGx5KHBhc3RlMCgnLi9GdW5jdGlvbnMvJywgbGlzdC5maWxlcygnLi9GdW5jdGlvbnMvJykpLCBzb3VyY2UpCnNmKCkKRGVmUGxvdFBhcnMoKQpgYGAKCiMgQm9vayBub3RlcyAKClREIGxlYXJuaW5nIGNvbWJpbmVzIGVsZW1lbnRzIG9mIE1DIGFuZCBEUCBpbiB0aGF0IGNhbiBsZWFybiBkaXJlY3RseSBmcm9tIGV4cGVyaWVuY2UgbGlrZSB0aGUgZm9ybWVyIHdvIGEgbW9kZWwgYnV0IGJvb3RzdHJhcHBpbmcgbGlrZSB0aGUgZm9ybWVyLiBWYXJpb3VzIGZvcm11bGF0aW9ucyBjYW4gYnJpZGdlIGZ1bGx5IGJldHdlZW4gdGhlc2UgbWV0aG9kcyBzdWNoIGFzIG4tc3RlcCBtZXRob2RzIGFuZCAkVEQoXGxhbWJkYSkkLiAgCgpXZSd2ZSBhbHJlYWR5IGNvdmVyZWQgTUMuIEluIHRoZSBwYXN0IGNoYXB0ZXIsIG9uZSB1cGRhdGUgZm9yIGl0IHdhcyBwb2xpY3kgZXZhbCB3aGVyZToKJFEoc190LCBhX3QpID0gYXZlcmFnZShSZXR1cm5zKHNfdCwgYV90KSkkIGFuZCByZXR1cm5zIHdlcmUgYSBydW5uaW5nIGxpc3Qgb2YgRywgd2hpY2ggd2VyZSBpbiB0dXJuIHVwZGF0ZWQgYXMKJFxnYW1tYSBHICsgUl90JCBmb3IgZWcgZXZlcnkgdmlzaXQgaW4gdGhlIGVwaXNvZGUuICAKCkEgZ29vZCBNQyB2YWx1ZSBmeCBlc3RpbWF0ZSBmb3Igbm9uc3RhdGlvbmFyeSBlbnZpcm9ubWVudHMgaXMgIAoKJCRWKFNfdCkgPSBWKFNfdCkgKyBcYWxwaGFbR190IC0gVihTX3QpXSQkCiAKIG1lOiBvciBmb3IgYWN0aW9uIHZhbHVlcyBJIHRoaW5rIHdvdWxkIHdyaXRlICAKIAogJCRRKFNfdCwgQV90KSA9IFEoU190LCBBX3QpICsgXGFscGhhW0dfdCAtIFEoU190LCBBX3QpJCQKIApUaGUga2V5IGRpZmZlcmVuY2Ugd2l0aCB0aGUgZWFybGllciBNQyB1cGRhdGUgcnVsZXMgcHJlc2VudGVkIGZvciBzdGF0aW9uYXJ5IGVudmlyb25tZW50cyBpcyB0aGF0IGluc3RlYWQgb2YgdGFraW5nIGFuIHVud2VpZ2h0ZWQgYXZlcmFnZSBpcyB1c2VzIGEgbGVhcm5pbmcgcmF0ZSB1cGRhdGUgYW5kIHNvIGlzIG1vcmUgbXlvcGljIHdpdGggaGlnaGVyICRcYWxwaGEkIHdoaWNoIHByZXN1bWFibHkgbWFrZXMgaXQgYmV0dGVyIGZvciBub25zdGF0aW9uYXJ5IGVudmlyb25tZW50cy4gSG93ZXZlciwgaXQncyBzdGlsbCBNQyBiZWNhdXNlIGl0IHdhaXRzIHVudGlsIHRoZSBlbmQgb2YgdGhlIGVwaXNvZGUgdG8gZG8gYW55IHVkcGF0aW5nIHRvIHRoZSB2YWx1ZSBlc3RpbWF0ZS4gIAoKIyMgVEQoMCkKCioqVGhlIGtleSBkaXN0aW5jdGlvbiBvZiBURCBpcyB0aGF0IGl0IHVwZGF0ZXMgaW1tZWRpYXRlbHkgaW5zdGVhZCBvZiB3YWl0aW5nIHRvIHJlYWNoIHRoZSBlbmQgb2YgdGhlIGVwaXNvZGUuKiogIAoKSW5zdGVhZCBvZiB0YWtpbmcgdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiB0aGUgZnVsbCByZXR1cm4gJEdfdCQgd2hpY2ggaXMgdGhlIHRoYXQtZXBpc29kZSBlc3RpbWF0ZSBvZiAkVihTX3QpJCBhbmQgdGhlIGluZm8gbGVhcm5lZCBiZWZvcmUgdGhlIGVwaXNvZGUsIGl0IHVzZXMgdGhlIGltbWVkaWF0ZSByZXdhcmQgKyB0aGUgdmFsdWUgb2YgdGhlIG5leHQgc3RhdGUuIFRoYXQgdGhpcyBjYW4gcmVwbGFjZSB1c2luZyBjb3VudGluZyB1cCBhbmQgYXZlcmFnaW5nIGFsbCB0aGUgc3Vic2VxdWVudCByZXR1cm5zIChhcyBpbiBNQykgY29tZXMgZnJvbSB0aGUgcmVjdXJzaXZlIHVucm9sbGluZyBvZiB0aGUgQmVsbG1hbiBlcW4gZnJvbSB3aGljaCB3ZSBsZWFybmVkIHRoYXQgdGhlIGN1cnJlbiBzdGF0ZSBlc3RpbWF0ZSBpcyBub3RoaW5nIG1vcmUgdGhhbiB0aGUgaW1tZWRpYXRlIHJld2FyZCBhbmQgbmV4dCBzdGF0ZSB2YWx1ZS4gQmVjYXVzZSB0aGUgbmV4dCBzdGF0ZSB2YWx1ZSBpcyBvZnRlbiBvbmx5IGFuIGVzdGltYXRlLCB0aGlzIGlzIGFuIHVwZGF0ZSBiYXNlZCBvbiBhIGd1ZXNzLiBUaGUgYWR2YW50YWdlIG9mIFREIG1ldGhvZHMgY29tZSBmcm9tIHRoYXQgZ3Vlc3Mgc3RpbGwgYmVpbmcgYmV0dGVyIHRoYW4gaGF2aW5nIHRvIHdhaXQgdW50aWwgYWxsIHRoZSBkYXRhIGFyZSBpbiB0byBzdGFydCBndWVzc2luZyBpbiB0aGUgcmlnaHQgZGlyZWN0aW9uLiAgCgpUaGUgc2ltcGxlc3QgVEQgbWV0aG9kICRURCgwKSQgdXNlcyB0aGUgdXBkYXRlCgokJFYoU190KSA9IFYoU190KSArIFxhbHBoYVtyX3t0KzF9ICsgXGdhbW1hIFYoc197dCsxfSkgLSBWKHNfdCldICQkCgoKCnRoaXMgYWxzbyBnaXZlcyByaXNlIHRvIG91ciBmaXJzdCBQRTogCgokJCBcZGVsdGFfdCA9IHJfe3QrMX0gKyBcZ2FtbWEgVihzX3t0KzF9KSAtIFYoc190KSAkJApBIE1hcmtvdiBSZXdhcmQgUHJvY2VzcyBpcyBhbiBNRFAgd2l0aG91dCBhY3Rpb25zIChtZTogaWUuIFBhdmxvdmlhbj8pLiBUaGV5J3JlIG9mdGVuIHVzZWZ1bCBmb3IgcHJlZGljdGlvbiBwcm9ibGVtcy4gIAoKIyMgU0FSU0EgIAoKTW92aW5nIHRvIGZvY3VzIG9uIHVzaW5nIFREIGVzdGltYXRlcyBmb3IgdGhlIGNvbnRyb2wgcHJvYmxlbS4gVGhpcyBmb2xsb3dzIHRoZSBzYW1lIEdlbmVyYWxpemVkIFBvbGljeSBJdGVyYXRpb24gZnJhbWV3b3JrIGFzIGJlZm9yZSBqdXN0IHVzaW5nIFREIGZvciBldmFsL3ByZWRpY3Rpb24uIE5vdyBpbnN0ZWFkIG9mIGVzdGltYXRpbmcgc3RhdGUgdmFsdWVzIHdlIHdhbnQgdG8gZXN0aW1hdGVzIGFjdGlvbiB2YWx1ZXMuIEZvciBldmFsdWF0aW5nIGEgcG9saWN5IHZpYSBhbiBvbi1wb2xpY3kgbWV0aG9kIHdlIHRyeSB0byBlc3RpbWF0ZSAkcV97XHBpfShzLGEpJC4gV2UndmUgYWxyZWFkeSB0YWxrZWQgYWJvdXQgaG93IHRvIGVzdGltYXRlIHN0YXRlIHZhbHVlcyBhbmQgdGhpcyB0dXJucyBvdXQgdG8gYmUgYmFzaWNhbGx5IHRoZSBzYW1lOyByZXdhcmRzIGFsd2F5cyBpbnRlcmxlYXZlIHRyYW5zaXRpb25zIHNvIGl0J3MganVzdCBTLVItUycgdnMgU0EtUi1TJ0EnIHRoYXQgd2UgdXNlIGZvciB1cGRhdGVzLiBTQVJTQSBpcyBzby1jYWxsZWQgYmVjYXVzZSBpdCB1c2VzIHRoZSB3aG9sZSBsYXR0ZXIgcXVpbnR1cGxlIGZvciB1cGRhdGVzICAKCiQkIFEoU190LCBBX3QpID0gUShTX3QsIEFfdCkgKyBcYWxwaGFbcl90ICsgXGdhbW1hIFEoU197dCsxfSxBX3t0KzF9KSAtIFEoU190LCBBX3QpXSAkJAoKCgoKCgoKCgoKCgo=</div>
 
 
 
