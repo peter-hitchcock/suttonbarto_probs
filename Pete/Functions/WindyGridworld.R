@@ -62,9 +62,9 @@ RideTheWind <- function(world_list,
                                                      arr.ind=TRUE)[, 2]])
     if (!world_list$noisy_wind) { 
       wind <- det_wind
-      if (!quiet) cat("\n** OH NO, a gust of --deterministic-- WIND blows us",
+      if (!quiet) cat("\n** OH HOW HORRID, a gust of --deterministic-- WIND blows us",
                       floor(wind / nrow(world_list$grid_world)) + wind %% nrow(world_list$grid_world), 
-                      "units upward**")
+                      "units upward **")
     } else {
       # Add stochastic component
       rand_draw <- runif(1, 0, 1)
@@ -78,7 +78,7 @@ RideTheWind <- function(world_list,
       wind <- det_wind + stochastic_comp
       if (!quiet) cat("\n** OH DREAD, a !!stochastic!! WIND blows us",
                       floor(wind / nrow(world_list$grid_world)) + wind %% nrow(world_list$grid_world), 
-                      "units upward**")
+                      "units upward **")
     }
   } else {
     wind <- 0
@@ -100,7 +100,7 @@ EvalMoveAttempt <- function(state,
     reward <- g_rew
     s_prime <- put_new_state
     if (!quiet) cat("\n (S') and that's great because as it turns out 
-                       that's the goal state! \n (R) Our reward is",  reward)
+                     that's the goal state! \n (R) Our reward is",  reward)
     # If not the goal state..
   } else {
     # .. and would take us off the grid .. 
@@ -154,7 +154,7 @@ DoEpisode <- function(world_list,
   state_list[[t_step]] <- state
   if (!control_opts$quiet) cat('\n Time step:', t_step, '\n (S) Our state is:', state)
   
-  ## Pick an action before looping so we can get our first update
+  ## For SARSA, pick an action before looping so we can get our first update
   if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
     action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
     if (!quiet) cat('\n (A) First action:', action)
@@ -163,17 +163,22 @@ DoEpisode <- function(world_list,
   
   while (!state == goal_state & t_step < 5e4) {
     
-    # No chance of wind on first trials
+    if (algo_list$alg == "Q_learn") {
+      # TO DO: select action
+    }
+    
+    # No chance of wind on first trial
     if (t_step == 1) put_new_state <- state+action
     # Putative new state = state + action + wind..
+    if (!quiet) cat("\n (A) We take action A:", action, ".")
     wind <- RideTheWind(world_list,
                         put_new_state,
                         windy_states)
     
     
     put_new_state <- state + action + wind # S <- S' is at bottom of loop
-    if (!quiet) cat("\n (A) We take action A:", action, ". 
-    Combined with the wind that putatively puts us in state", put_new_state, ".")
+    
+    cat("\n Combined with the wind that putatively puts us in state", put_new_state, ".")
     
     #.. but need to evaluate whether this is a valid state transition,
     # returning s',r where s' = s if not
@@ -192,13 +197,17 @@ DoEpisode <- function(world_list,
       a_prime <- SelActOnPolicySARSA(Q_SA_mat, state=s_prime)
     }
     if (!quiet) cat("\n (A') We pick next action:", a_prime)
-    # .. and do SARSA update
+    
+    # .. and do appropriate update
     if (algo_list$alg == "SARSA") {
       Q_SA_mat <- SARSAUpdateQSA(Q_SA_mat,
                                  action, state, a_prime, s_prime,
                                  reward, gamma, alpha, control_opts)
     }
     
+    if (algo_list$alg == "Q_learn") {
+      
+    }
     
     if (t_step > 1) {
       state <- s_prime
@@ -329,10 +338,10 @@ diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
 # "basic" = base actions only
 # "kings" = base + diagonal (king's rules) 
 # "kings_plus" = king's rules + same state
-action_type <- "kings"
+action_type <- "kings_plus"
 start_state <- 4
 goal_state <- 53
-noisy_wind <- 0 # Make wind blows stochastic?
+noisy_wind <- 1 # Make wind blows stochastic?
 # Reward for reaching goal / non-goal state
 non_goal_rewards <- -1 
 goal_reward <- 0

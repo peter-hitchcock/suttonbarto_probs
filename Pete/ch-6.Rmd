@@ -10,7 +10,7 @@ knitr::opts_chunk$set(fig.width=14, fig.height=10)
 
 sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
 sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
-sf()
+#sf()
 DefPlotPars()
 ```
 
@@ -53,10 +53,17 @@ A Markov Reward Process is an MDP without actions (me: ie. Pavlovian?). They're 
 
 Moving to focus on using TD estimates for the control problem. This follows the same Generalized Policy Iteration framework as before just using TD for eval/prediction. Now instead of estimating state values we want to estimates action values. For evaluating a policy via an on-policy method we try to estimate $q_{\pi}(s,a)$. We've already talked about how to estimate state values and this turns out to be basically the same; rewards always interleave transitions so it's just S-R-S' vs SA-R-S'A' that we use for updates. SARSA is so-called because it uses the whole latter quintuple for updates  
 
-$$ Q(S_t, A_t) = Q(S_t, A_t) + \alpha[r_t + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t, A_t)] $$
+$$ Q(S_t, A_t) = Q(S_t, A_t) + \alpha[R_{t+1} + \gamma Q(S_{t+1},A_{t+1}) - Q(S_t, A_t)] $$
 
+## Q-learning
 
+**The key difference from SARSA is that Q-learning uses the max action estimate from $Q(S_{t+1})$ for the prediction error, enabling a direct estimate of $q*$ the optimal value function.** 
 
+$$ Q(S_t, A_t) = Q(S_t, A_t) + \alpha[R_{t+1} + \gamma \ max_a \ Q(S_{t+1},a) - Q(S_t, A_t)] $$
+
+Critically, this decouples the value estimation from the policy being followed.  
+
+Besides taking the max, the key differences algorithmically are that you can take the first action in the loop through time steps because you're updating based on the results of action $A$ (+ reward + max value) rather than $A'$. For the same reason, you don't update A->A' at the end, as instead of coupling your action steps to your changing value estimate, you are selecting actions anew based on the value estimate.  
 
 
 
