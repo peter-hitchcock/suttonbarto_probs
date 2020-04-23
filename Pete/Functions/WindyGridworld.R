@@ -18,7 +18,7 @@ SolveWindyGridWorld <- function(world_list,
   outs_list <- list()
   for (ep in seq_along(1:control_opts$n_episodes)) {
     
-    if (!control_opts$quiet) { cat('\n##### NEW EPISODE ##########\n'); pause(2) }
+    if (!control_opts$quiet) { cat('\n##### NEW EPISODE ##########\n'); pause(1) }
     
     outs <- DoEpisode(world_list,
                       algo_list,
@@ -109,7 +109,7 @@ EvalMoveAttempt <- function(state,
       # .. change state and assign reward
       reward <- ng_rew
       s_prime <- put_new_state 
-      if (!quiet) cat("\n (S') and that's a valid transition so we're now in", s_prime, ".",
+      if (!quiet) cat("\n (S') and that's a valid transition so we are in fact in", s_prime, ".",
                       "\n (R) Our reward is",  reward)
     }
   } 
@@ -144,68 +144,34 @@ DoEpisode <- function(world_list,
   ######################################################################
   ########################### START EPISODE #############################
   state <- world_list$start_state 
+  # Initialize state and time step 
   t_step <- 1
   state_list[[t_step]] <- state
+  if (!control_opts$quiet) cat('\n Time step:', t_step, '\n (S) Our state is:', state)
   
-  # Initialize state 
-  if (!quiet) cat('\n (S) Our state is:', state)
-  
-  ## Cycle through one state transition before looping so we can get our first update
+  ## Pick an action before looping so we can get our first update
   if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
     action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
     if (!quiet) cat('\n (A) First action:', action)
     action_list[[t_step]] <- action
   }
-  # # Find what state would be if it was only determined by agent move
-  # agent_move <- state+action
-  # if (!quiet) cat('\n We try to move to:', agent_move)
-  # put_new_state <- agent_move + 0 # Can never transition to a windy state from starting state
-  # 
-  # # Get our first S' and R
-  # sp_r <- EvalMoveAttempt(put_new_state,
-  #                         goal_state,
-  #                         world,
-  #                         ng_rew,
-  #                         rew) 
-  # 
-  # s_prime <- sp_r[["s_prime"]]
-  # reward <- sp_r[["s_prime"]]
-  # 
-  # # Now that we have S',R, we can get A'..
-  # if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
-  #   a_prime <- SelActOnPolicySARSA(Q_SA_mat, state=s_prime)
-  # }
-  # if (!quiet) cat("\n (A') We pick next action:", a_prime)
-  # # .. and do SARSA update
-  # if (algo_list$alg == "SARSA") {
-  #   Q_SA_mat <- SARSAUpdateQSA(Q_SA_mat,
-  #                              action, state, a_prime, s_prime,
-  #                              reward, gamma, alpha, control_opts)
-  # }
-
-  # Now rinse and repeat for time steps 2 onward: 
-  # Continue episode until end state is reached or hit 10k time steps
+  
   while (!state == goal_state & t_step < 5e4) {
     
-    if (!control_opts$quiet) cat('\n Time step:', t_step)
-    t_step <- t_step+1
+    # No chance of wind on first trials
+    if (t_step == 1) put_new_state <- state+action
+    # Putative new state = state + action + wind..
+    wind <- RideTheWind(world_list,
+                        put_new_state,
+                        windy_states)
     
-    if (t_step == 2) {
-      put_new_state <- state + action + 0 # (no chance of ending up in a windy state on trial 1)
-    } else {
-      state <- s_prime
-      action <- a_prime
-      
-      wind <- RideTheWind(world_list,
-                          put_new_state,
-                          windy_states)
     
-      if (!quiet) cat("\n Putatively we're in state", put_new_state)
-      
-      put_new_state <- state + action + wind
-    }
+    put_new_state <- state + action + wind # S <- S' is at bottom of loop
+    if (!quiet) cat("\n (A) We take action A:", action, ". 
+    Combined with the wind that putatively puts us in state", put_new_state, ".")
     
-    # Evaluate whether this is a valid state transition and return s',r
+    #.. but need to evaluate whether this is a valid state transition,
+    # returning s',r where s' = s if not
     sp_r <- EvalMoveAttempt(state,
                             put_new_state,
                             goal_state,
@@ -214,7 +180,7 @@ DoEpisode <- function(world_list,
                             g_rew) 
     
     s_prime <- sp_r[["s_prime"]]
-    reward <- sp_r[["s_prime"]]
+    reward <- sp_r[["reward"]]
     
     if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
       # Now that we have s'r we can get A'..
@@ -227,9 +193,19 @@ DoEpisode <- function(world_list,
                                  action, state, a_prime, s_prime,
                                  reward, gamma, alpha, control_opts)
     }
+    
+    
+    if (t_step > 1) {
+      state <- s_prime
+      action <- a_prime
+    }
     ## Remember state advance and reward
-    action_list[[t_step+1]] <- a_prime
-    state_list[[t_step+1]] <- s_prime
+    action_list[[t_step]] <- a_prime
+    state_list[[t_step]] <- s_prime
+    
+    if (!control_opts$quiet) cat('\n Time step:', t_step)
+    t_step <- t_step+1
+    
   } # END EPISODE LOOP
   
 outs <- list("Q_SA_mat"=Q_SA_mat, 
@@ -393,13 +369,13 @@ control_opts <- list("quiet"=quiet,
 SolveWindyGridWorld(world_list, algo_list, control_opts)
 
 # Create a visitation graph to print every 1k iters 
-cols <- 10
-row_col <- data.frame(expand_grid("r"=1:rows, "c"=1:cols), "visit"=0)
-inds <- which(grid_world==state, arr.ind = TRUE)
-row_col[row_col$r == inds[1] & row_col$c == inds[2], ]$visit <- 
-  row_col[row_col$r == inds[1] & row_col$c == inds[2], ]$visit+1
-
-ggplot(row_col, aes(as.factor(c), as.factor(r)), fill=visit) + geom_tile() + ga + ap
+# cols <- 10
+# row_col <- data.frame(expand_grid("r"=1:rows, "c"=1:cols), "visit"=0)
+# inds <- which(grid_world==state, arr.ind = TRUE)
+# row_col[row_col$r == inds[1] & row_col$c == inds[2], ]$visit <- 
+#   row_col[row_col$r == inds[1] & row_col$c == inds[2], ]$visit+1
+# 
+# ggplot(row_col, aes(as.factor(c), as.factor(r)), fill=visit/sum(visit)) + geom_tile() + ga + ap
 # At 1k visits, normalize over number of visits and print heatmap
 
 # <- 
@@ -412,4 +388,9 @@ ggplot(row_col, aes(as.factor(c), as.factor(r)), fill=visit) + geom_tile() + ga 
 #length(unlist(map(strsplit(names(windy_states), "_"), 1)))
 # grid_df <- data.frame()
 #ggplot(data.frame(expand.grid(0:5, 0:5)), aes(Var1, Var2)) + geom_tile()
-ggplot(data.frame(a=1:10, b=1:5), aes(as.factor(a), as.factor(b))) + geom_tile() + ga + ap
+#ggplot(data.frame(a=1:10, b=1:5), aes(as.factor(a), as.factor(b))) + geom_tile() + ga + ap
+
+# # Find what state would be if it was only determined by agent move
+# agent_move <- state+action
+# if (!quiet) cat('\n We try to move to:', agent_move)
+# put_new_state <- agent_move + 0 # Can never transition to a windy state from starting state
