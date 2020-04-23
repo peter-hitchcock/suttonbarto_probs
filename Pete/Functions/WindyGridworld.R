@@ -9,6 +9,11 @@ SolveWindyGridWorld <- function(world_list,
   ### Outer environment to call RL solutions to windy gridworld. Returns
   # policy and other information for the algorithm / parameters initialized ###
   
+  # Determine set of allowed actions
+  if (world_list$action_type=="base") world_list$actions <- base_actions
+  if (world_list$action_type=="kings") world_list$actions <- c(base_actions, diag_actions)
+  if (world_list$action_type=="kings_plus") world_list$actions <- c(base_actions, diag_actions, 0)
+  
   if (algo_list$alg=="SARSA") {
     algo_list[["Q_SA_mat"]] <- InitSARSA_Q_SA(world_list, algo_list$pars)
   }
@@ -247,7 +252,7 @@ InitSARSA_Q_SA <- function(world_list,
   ### Build initial Q_SA_matrix for SARSA ###
   
   # Initalize Q(S,A) matrix..
-  Q_SA_mat <- expand.grid("s"=1:length(grid_world), "a"=world_list$base_actions)
+  Q_SA_mat <- expand.grid("s"=1:length(grid_world), "a"=world_list$actions)
   # .. and either set values to 0..
   if (as.numeric(pars["zero_init_values"])) {
     Q_SA_mat$value <- rep(0, nrow(Q_SA_mat)) 
@@ -324,7 +329,7 @@ diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
 # "basic" = base actions only
 # "kings" = base + diagonal (king's rules) 
 # "kings_plus" = king's rules + same state
-action_type <- "basic"
+action_type <- "kings"
 start_state <- 4
 goal_state <- 53
 noisy_wind <- 0 # Make wind blows stochastic?
