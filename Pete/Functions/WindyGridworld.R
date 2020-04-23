@@ -54,6 +54,79 @@ CreateWindyGridworld <- function(rows=7, columns=10) {
   world <- matrix(1:(rows*columns), nrow=rows, ncol=columns)
 world  
 }
+RideTheWind <- function(world_list,
+                        agent_move,
+                        windy_state) {
+  ### Perturbs actions by stochastic or deterministic wind,
+  # outputting wind amount ###
+  
+  ## Add wind
+  # If this is a windy state..
+  if (any(agent_move == windy_states)) {
+    # .. find how much wind to add by referencing the column name in 
+    # windy_states.. 
+    det_wind <- as.numeric(names(windy_states)[which(agent_move==windy_states, 
+                                                     arr.ind=TRUE)[, 2]])
+    if (!world_list$noisy_wind) { 
+      det_wind <- wind
+      if (!quiet) cat("\n** OH NO, a gust of --deterministic-- WIND blows us",
+                      floor(wind / nrow(world)) + wind %% nrow(world), 
+                      "units upward**")
+    } else {
+      # Add stochastic component
+      rand_draw <- runif(1, 0, 1)
+      if (rand_draw < 1/3) {
+        stochastic_comp <- -nrow(world) # move one more down
+      } else if (rand_draw < 2/3) {
+        stochastic_comp <- nrow(world) # move one more up
+      } else {
+        stochastic_comp <- 0 
+      }
+      wind <- det_wind + stochastic_comp
+      if (!quiet) cat("\n** OH DREAD, a !!stochastic!! WIND blows us",
+                      floor(wind / nrow(world)) + wind %% nrow(world), 
+                      "units upward**")
+    }
+  } else {
+    wind <- 0
+  }
+wind  
+}
+EvalMoveAttempt <- function(put_new_state,
+                            goal_state,
+                            world,
+                            ng_rew,
+                            rew) {
+  ### Returns s'r by determining whether a proposed state transition is 
+  # valid ###
+  
+  ## Find s',r
+  # If the putative new state is the goal state then assign final state and reward=0
+  if (put_new_state == goal_state) {
+    reward <- g_rew
+    s_prime <- put_new_state
+    if (!quiet) cat("\n (S') and that's great because as it turns out 
+                       that's the goal state! \n (R) Our reward is",  reward)
+    # If not the goal state..
+  } else {
+    # .. and would take us off the grid .. 
+    if (!put_new_state %in% world) {
+      # .. don't change state but do assign reward .. 
+      reward <- ng_rew
+      s_prime <- state
+      if (!quiet) cat("\n (S') but that doesn't exist so we're stuck in", state, ".",
+                      "\n (R) Our reward is",  reward)
+    } else {
+      # .. change state and assign reward
+      reward <- ng_rew
+      s_prime <- put_new_state 
+      if (!quiet) cat("\n (S') and that's a valid transition so we're now in", state, ".",
+                      "\n (R) Our reward is",  reward)
+    }
+  } 
+  
+  list("s_prime"=s_prime, "reward"=reward)  
+}
 ######################################################################
 DoEpisode <- function(world_list,
                       algo_list,
@@ -92,83 +165,33 @@ DoEpisode <- function(world_list,
   # Find what state would be if it was only determined by agent move
   agent_move <- state+action
   if (!quiet) cat('\n We try to move to:', agent_move)
+  wind <- 0 # Can never transition to wind from starting state
+  put_new_state <- agent_move + 0
   
-  RideTheWind <- function(world_list,
-                          agent_move,
-                          windy_state) {
-    ### Perturbs actions by stochastic or deterministic wind,
-    # outputting wind amount ###
-    
-    ## Add wind
-    # If this is a windy state..
-    if (any(agent_move == windy_states)) {
-      # .. find how much wind to add by referencing the column name in 
-      # windy_states.. 
-      det_wind <- as.numeric(names(windy_states)[which(agent_move==windy_states, 
-                                                       arr.ind=TRUE)[, 2]])
-      if (!world_list$noisy_wind) { 
-        det_wind <- wind
-        if (!quiet) cat("\n** OH NO, a gust of --deterministic-- WIND blows us",
-                        floor(wind / nrow(world)) + wind %% nrow(world), 
-                        "units upward**")
-      } else {
-        # Add stochastic component
-        rand_draw <- runif(1, 0, 1)
-        if (rand_draw < 1/3) {
-          stochastic_comp <- -nrow(world) # move one more down
-        } else if (rand_draw < 2/3) {
-          stochastic_comp <- nrow(world) # move one more up
-        } else {
-          stochastic_comp <- 0 
-        }
-        wind <- det_wind + stochastic_comp
-        if (!quiet) cat("\n** OH DREAD, a !!stochastic!! WIND blows us",
-                        floor(wind / nrow(world)) + wind %% nrow(world), 
-                        "units upward**")
-      }
-      # and add it onto putative new state
-      put_new_state <- agent_move + wind
-    } else {
-      # Otherwise putative new state is just state + action
-      put_new_state <- agent_move
-    }
-    
-  }
   while (!state == goal_state & t_step < 1e4) {
     
-   
-    
     if (!quiet) cat("\n Putatively we're in state", put_new_state)
-    ## Find s',r
-    # If the putative new state is the goal state then assign final state and reward=0
-    if (put_new_state == goal_state) {
-      reward <- g_rew
-      s_prime <- put_new_state
-      if (!quiet) cat("\n (S') and that's great because as it turns out 
-                       that's the goal state! \n (R) Our reward is",  reward)
-      # If not the goal state..
-    } else {
-      # .. and would take us off the grid .. 
-      if (!put_new_state %in% world) {
-        # .. don't change state but do assign reward .. 
-        reward <- ng_rew
-        s_prime <- state
-        if (!quiet) cat("\n (S') but that doesn't exist so we're stuck in", state, ".",
-                        "\n (R) Our reward is",  reward)
-      } else {
-        # .. change state and assign reward
-        reward <- ng_rew
-        s_prime <- put_new_state 
-        if (!quiet) cat("\n (S') and that's a valid transition so we're now in", state, ".",
-                        "\n (R) Our reward is",  reward)
-      }
-    } # END ADVANCE s', r ADVANCE
+    wind <- RideTheWind <- function(world_list,
+                                    agent_move,
+                                    windy_state)
+  
+    put_new_state <- put_new_state + wind
     
+    sp_r <- EvalMoveAttempt(put_new_state,
+                            goal_state,
+                            world,
+                            ng_rew,
+                            rew) 
+    
+    s_prime <- sp_r[["s_prime"]]
+    reward <- sp_r[["s_prime"]]
+    
+    # Now that we have S',R, we can get A'..
     if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
       a_prime <- SelActOnPolicySARSA(Q_SA_mat, state=s_prime)
     }
     if (!quiet) cat("\n (A') We pick next action:", a_prime)
-    
+    # .. and do SARSA update
     if (algo_list$alg == "SARSA") {
       Q_SA_mat <- SARSAUpdateQSA(Q_SA_mat,
                                  action, state, a_prime, s_prime,
@@ -352,4 +375,4 @@ SolveWindyGridWorld(world_list, algo_list, control_opts)
 #length(unlist(map(strsplit(names(windy_states), "_"), 1)))
 # grid_df <- data.frame()
 #ggplot(data.frame(expand.grid(0:5, 0:5)), aes(Var1, Var2)) + geom_tile()
-ggplot(data.frame(a=1:10, b=1:5), aes(as.factor(a), as.factor(b))) + geom_tile() + ga + ap
+#ggplot(data.frame(a=1:10, b=1:5), aes(as.factor(a), as.factor(b))) + geom_tile() + ga + ap
