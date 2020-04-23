@@ -1,10 +1,10 @@
 #### FUNCTIONS TO CREATE WINDY GRIDWORLD (CH 6) AND SOLVE VIA DIFF RL METHODS ####
 ######################################################################
-SolveWindyGridWorld <- function(world_list,
-                                # Name and specs for RL algorithm to implement,
-                                # defaults to SARSA
-                                algo_list,
-                                control_opts
+SolveWindyOrCliffWorlds <- function(world_list,
+                                    # Name and specs for RL algorithm to implement,
+                                    # defaults to SARSA
+                                    algo_list,
+                                    control_opts
 ) {
   ### Outer environment to call RL solutions to windy gridworld. Returns
   # policy and other information for the algorithm / parameters initialized ###
@@ -322,14 +322,52 @@ action
 ######################################################################
 ########################### INTIALIZATIONS ###########################
 ## Set control options ##
-quiet <- 0 
+quiet <- 0 # print trial-by-trial 
+visualize <- 1 # output graphs?
 n_episodes <- 1e2
-## Set world options ##
+# Which algorithm do you want to learn with? (TO DO: only SARSA on-policy implemented so far)
+# 1 "SARSA"--and can set on- vs. off- policy below in SARSA's pars
 which_algo <- "SARSA"
-rows <- 7 # Set rows of gridworld 
-grid_world <- CreateWindyGridworld(rows)
+## Set world options ##
+# Which world do you want? (TO DO: only windy grid world constructed so far)
+# 1 "windy" for windy grid world
+# 2 "cliff_walk" for cliff walk world
+# 3 "windy_cliff_walk" if you really want to get crazy
+environ <- "windy" 
+# Set dimensions of world
+if (environ == "windy") { 
+  rows <- 7; cols <- 10 
+} else {
+  rows <- 4; cols <- 12
+}
+grid_world <- CreateWindyGridworld(rows, cols)
 # Winds by column given in matrix indices the wind moves us
-winds <- c(0, 0, 0, rows, rows, rows, rows+1, rows+1, rows+1, 0)
+winds <- rep(0, cols) # default to no wind
+# Where and how much wind do you want in your windy worlds?
+if (environ == "windy" | environ == "cliff_walk") {
+  winds <- rep(0, cols)
+  # Note that wind in the first or second columns won't work for SARSA
+  winds[4:9] <- c(rows, rows, rows, rows+1, rows+1, rows)
+} 
+if (environ == "windy") {
+  start_state <- round(rows/2) # start at the middle + 1
+  # This is difficult to avoid hard coding, but may need to tweak this depending 
+  # on row, col settings
+  goal_state <- 53
+  cliff <- c() # no cliff in regular windy world
+} else {
+  start_state <- nrow(grid_world) # start in the bottom left..
+  goal_state <- nrow(grid_world) * ncol(grid_world) # ..reach goal in the bottom right..
+  # .. alas, The Abyss lies between them
+  cliff <- setdiff(grid_world[nrow(grid_world), ], 
+                   c(start_state, goal_state))
+}
+# For windy worlds, set second arg to 1 for stochastic wind blows
+noisy_wind <- ifelse(grep("windy", environ), 1, 0)
+# Reward for reaching goal / non-goal state
+non_goal_rewards <- -1 
+goal_reward <- 0
+cliff_rewards <- -100
 # Up down left and right in matrix indexing
 base_actions <- c(1, -1, rows, -rows)
 # Diagonal actions in matrix indexing
@@ -339,12 +377,6 @@ diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
 # "kings" = base + diagonal (king's rules) 
 # "kings_plus" = king's rules + same state
 action_type <- "kings_plus"
-start_state <- 4
-goal_state <- 53
-noisy_wind <- 1 # Make wind blows stochastic?
-# Reward for reaching goal / non-goal state
-non_goal_rewards <- -1 
-goal_reward <- 0
 # TO DO: implement softmax and other soft varieties
 soft_policy <- "eps_greedy"
 if (soft_policy == "eps_greedy") softness <- .1
@@ -360,8 +392,17 @@ if (which_algo=="SARSA") {
     "on_or_off"="on", # TO DO: edit, others not yet implemented
     "soft_policy"=soft_policy
   )
-  algo_list <- list("alg"="SARSA", "pars"=pars)
 }
+if (which_algo=="Q_learning") {
+  pars <- list(
+    "softness"=softness,
+    "alpha"=.3, # learning rate
+    "gamma"=1, # discount
+    "zero_init_values"=1, # how to inialize q values
+    "soft_policy"=soft_policy
+  )
+}
+algo_list <- list("alg"=which_algo, "pars"=pars)
 # Package up world items
 world_list <- list(
   "grid_world"=grid_world,
@@ -373,14 +414,19 @@ world_list <- list(
   "goal_state"=goal_state,
   "ng_rews"=non_goal_rewards,
   "g_rew"=goal_reward,
+  "cliff_rews"=cliff_rewards,
+  "cliff"=cliff,
   "noisy_wind"=noisy_wind
 )
 # Package up control and debug options
+# TO DO: placeholder for vis options
+vis_list <- list()
 control_opts <- list("quiet"=quiet, 
                      "n_episodes"=n_episodes,
-                     "ts"=1)
+                     "ts"=1,
+                     "vis"=vis_list)
 
-SolveWindyGridWorld(world_list, algo_list, control_opts)
+SolveWindyOrCliffWorlds(world_list, algo_list, control_opts)
 
 # Create a visitation graph to print every 1k iters 
 # cols <- 10

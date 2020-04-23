@@ -10,7 +10,7 @@ knitr::opts_chunk$set(fig.width=14, fig.height=10)
 
 sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
 sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
-#sf()
+sf()
 DefPlotPars()
 ```
 
@@ -63,7 +63,16 @@ $$ Q(S_t, A_t) = Q(S_t, A_t) + \alpha[R_{t+1} + \gamma \ max_a \ Q(S_{t+1},a) - 
 
 Critically, this decouples the value estimation from the policy being followed.  
 
-Besides taking the max, the key differences algorithmically are that you can take the first action in the loop through time steps because you're updating based on the results of action $A$ (+ reward + max value) rather than $A'$. For the same reason, you don't update A->A' at the end, as instead of coupling your action steps to your changing value estimate, you are selecting actions anew based on the value estimate.  
+Besides taking the max, the key differences algorithmically are that you can take the first action in the loop through time steps because you're updating based on the results of action $A$ (+ reward + max value) rather than the update depending on having taken $A'$. For the same reason, you don't update $A \gets A'$ at the end, as instead of coupling your action steps to your changing value estimate, you are selecting actions anew based on the value estimate.  
+
+*6.11: Why is Q-learning off-policy?*  
+*A:* Except in the special case of a deterministic greedy policy, the actions actually taken online are not the same as those used to update the policy offline. Although the specific algorithms are different, this makes it analogous to the off-policy cases we discussed last chapter where we followed some behavioral policy but then updated our value function in a different way (in that case via some importance sampling scheme determining how relevant the behavior taken was to the policy we were estimating, in this case via the estimate of the max of $Q(S_{t+1} A_{t+1})$). 
+
+As a consequence of decoupling its actions from what it estimates to be best, Q-learning can even asymptotically behave badly. In the cliff-walking example, Q-learning learns $q*$ offline but online it acts $\epsilon$-greedily. So it learns if it will only follow $q*$ but in practice falls short of this, leading to dire consequences. In contrast, online SARSA's update is based directly on A', so it will learn the less optimal policy of staying away from the cliff edge, which works out better for it when in practice it doesn't follow a deterministic action policy. 
+
+*6.12* As $0 \gets \epsilon$, these are the same algorithm because $A \gets A'$ in SARSA is based on the max, leading the same number to be used in the updating.  
+
+
 
 
 
