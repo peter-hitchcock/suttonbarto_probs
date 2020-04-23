@@ -85,12 +85,18 @@ RideTheWind <- function(world_list,
   }
 wind  
 }
-EvalMoveAttempt <- function(state,
+EvalMoveAttempt <- function(
+                            state,
                             put_new_state,
                             goal_state,
                             world,
                             ng_rew,
-                            g_rew) {
+                            g_rew,
+                            cliff_rew, 
+                            is_there_a_cliff, # indicator 
+                            cliff, # cliff indices
+                            start_state # to return to if fall into the cliff
+                            ) {
   ### Returns s'r by determining whether a proposed state transition is 
   # valid ###
   
@@ -133,6 +139,10 @@ DoEpisode <- function(world_list,
   world <- world_list$grid_world
   ng_rew <- world_list$ng_rews
   g_rew <- world_list$g_rew
+  cliff_rew <- world_list$cliff_rews
+  is_there_a_cliff <- world_list$is_there_a_cliff
+  cliff <- world_list$cliff
+  start_state <- world_list$start_state
   goal_state <- world_list$goal_state
   gamma <- algo_list$pars$gamma
   alpha <- algo_list$pars$alpha
@@ -144,11 +154,11 @@ DoEpisode <- function(world_list,
   winds <- world_list$winds
   wcols <- which(winds!=0) # columns where its windy
   str_winds <- noquote(as.character(winds[wcols])) # string representation of wind
-  # .. and by by state indices, with column names = upddraft + random string
+  # Set column names = upddraft + random string
   windy_states <- setNames(data.frame(grid_world[, wcols]), paste0(str_winds))
   ######################################################################
   ########################### START EPISODE #############################
-  state <- world_list$start_state 
+  state <- start_state 
   # Initialize state and time step 
   t_step <- 1
   state_list[[t_step]] <- state
@@ -187,7 +197,11 @@ DoEpisode <- function(world_list,
                             goal_state,
                             world,
                             ng_rew,
-                            g_rew) 
+                            g_rew,
+                            cliff_rew,
+                            is_there_a_cliff, 
+                            cliff, 
+                            start_state)
     
     s_prime <- sp_r[["s_prime"]]
     reward <- sp_r[["reward"]]
@@ -368,6 +382,7 @@ noisy_wind <- ifelse(grep("windy", environ), 1, 0)
 non_goal_rewards <- -1 
 goal_reward <- 0
 cliff_rewards <- -100
+is_there_a_cliff <- 1
 # Up down left and right in matrix indexing
 base_actions <- c(1, -1, rows, -rows)
 # Diagonal actions in matrix indexing
@@ -376,7 +391,7 @@ diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
 # "basic" = base actions only
 # "kings" = base + diagonal (king's rules) 
 # "kings_plus" = king's rules + same state
-action_type <- "kings_plus"
+action_type <- "base"
 # TO DO: implement softmax and other soft varieties
 soft_policy <- "eps_greedy"
 if (soft_policy == "eps_greedy") softness <- .1
@@ -414,6 +429,7 @@ world_list <- list(
   "goal_state"=goal_state,
   "ng_rews"=non_goal_rewards,
   "g_rew"=goal_reward,
+  "is_there_a_cliff"=is_there_a_cliff,
   "cliff_rews"=cliff_rewards,
   "cliff"=cliff,
   "noisy_wind"=noisy_wind
