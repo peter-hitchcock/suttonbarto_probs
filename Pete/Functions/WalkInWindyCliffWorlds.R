@@ -23,7 +23,7 @@ SolveWindyOrCliffWorlds <- function(world_list,
   outs_list <- list()
   for (ep in seq_along(1:control_opts$n_episodes)) {
     
-    if (!control_opts$quiet) { cat('\n##### NEW EPISODE ##########\n'); pause(1) }
+    if (!control_opts$quiet) { cat('\n##### NEW EPISODE ##########\n'); pause(2) }
     
     outs <- DoEpisode(world_list,
                       algo_list,
@@ -41,7 +41,7 @@ SolveWindyOrCliffWorlds <- function(world_list,
 outs    
 }
 ########################### WORLD FUNCTIONS ###########################
-CreateWindyGridworld <- function(rows=7, columns=10) {
+CreateGridworld <- function(rows=7, columns=10) {
   ### Returns a gridworld incl optional args if want to use 
   # diff dimensions than book ###
   world <- matrix(1:(rows*columns), nrow=rows, ncol=columns)
@@ -107,23 +107,35 @@ EvalMoveAttempt <- function(
     s_prime <- put_new_state
     if (!quiet) cat("\n (S') and that's great because as it turns out 
                      that's the goal state! \n (R) Our reward is",  reward)
-    # If not the goal state..
+  # If not the goal state..
   } else {
     # .. and would take us off the grid .. 
     if (!put_new_state %in% world) {
-      # .. don't change state but do assign reward .. 
+      # .. don't change state but do assign reward. 
       reward <- ng_rew
       s_prime <- state
       if (!quiet) cat("\n (S') but that doesn't exist so we're stuck in", s_prime, ".",
                       "\n (R) Our reward is",  reward)
     } else {
-      # .. change state and assign reward
+      #  Otherwise this is a valid state, but we need to check if it's in the cliff..
+      purgatory_state <- put_new_state # .. put in holding state before we figure out if this is S'..
+      if (is_there_a_cliff & purgatory_state %in% cliff) {
+        # .. drats!
+        reward <- cliff_rew
+        s_prime <- start_state
+        if (!quiet) cat("\n (S') \n ---- OH HORROR OF ALL HORRORS WE JUMPED INTO THE CLIFF--
+                        \n Returning to starting state", s_prime, ".",
+                        "\n (R) Our reward is",  reward)
+        #pause(1)
+      } else {
+      # ..this is a valid, non-cliff state transition
+      s_prime <- put_new_state
       reward <- ng_rew
-      s_prime <- put_new_state 
       if (!quiet) cat("\n (S') and that's a valid transition so we are in fact in", s_prime, ".",
                       "\n (R) Our reward is",  reward)
-    }
-  } 
+      } # END cliff state condition
+    }  # END valid state condition 
+  } # END goal state condition
   
 list("s_prime"=s_prime, "reward"=reward)  
 }
@@ -181,14 +193,27 @@ DoEpisode <- function(world_list,
     if (t_step == 1) put_new_state <- state+action
     # Putative new state = state + action + wind..
     if (!quiet) cat("\n (A) We take action A:", action, ".")
-    wind <- RideTheWind(world_list,
-                        put_new_state,
-                        windy_states)
+    
+    if (world_list$environ == "cliff_walk") {
+      # No wind in regular cliff world
+      wind <- 0
+      partial_str <- "T"
+    } else {
+      wind <- RideTheWind(world_list,
+                          put_new_state,
+                          windy_states)
+      partial_str <- "Combined with the wind t"
+    }
+    
     
     
     put_new_state <- state + action + wind # S <- S' is at bottom of loop
     
-    cat("\n Combined with the wind that putatively puts us in state", put_new_state, ".")
+    if (!quiet) {
+      cat(paste0(partial_str, "hat putatively puts us in state"), 
+          put_new_state, ".")
+    }
+    
     
     #.. but need to evaluate whether this is a valid state transition,
     # returning s',r where s' = s if not
@@ -347,14 +372,14 @@ which_algo <- "SARSA"
 # 1 "windy" for windy grid world
 # 2 "cliff_walk" for cliff walk world
 # 3 "windy_cliff_walk" if you really want to get crazy
-environ <- "windy" 
+environ <- "cliff_walk" 
 # Set dimensions of world
 if (environ == "windy") { 
   rows <- 7; cols <- 10 
 } else {
   rows <- 4; cols <- 12
 }
-grid_world <- CreateWindyGridworld(rows, cols)
+grid_world <- CreateGridworld(rows, cols)
 # Winds by column given in matrix indices the wind moves us
 winds <- rep(0, cols) # default to no wind
 # Where and how much wind do you want in your windy worlds?
@@ -377,7 +402,7 @@ if (environ == "windy") {
                    c(start_state, goal_state))
 }
 # For windy worlds, set second arg to 1 for stochastic wind blows
-noisy_wind <- ifelse(grep("windy", environ), 1, 0)
+noisy_wind <- ifelse(grepl("windy", environ), 1, 0)
 # Reward for reaching goal / non-goal state
 non_goal_rewards <- -1 
 goal_reward <- 0
@@ -420,6 +445,7 @@ if (which_algo=="Q_learning") {
 algo_list <- list("alg"=which_algo, "pars"=pars)
 # Package up world items
 world_list <- list(
+  "environ"=environ,
   "grid_world"=grid_world,
   "winds"=winds,
   "base_actions"=base_actions,
