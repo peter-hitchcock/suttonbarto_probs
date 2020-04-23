@@ -1751,25 +1751,16 @@ summary {
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxua25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKVxua25pdHI6Om9wdHNfY2h1bmskc2V0KGZpZy53aWR0aD0xNCwgZmlnLmhlaWdodD0xMCkgXG5cblxuc2FwcGx5KGMoJ3RpZHl2ZXJzZScsICdkcGx5cicsICdwcm9mdmlzJyksIHJlcXVpcmUsIGNoYXJhY3Rlcj1UUlVFKVxuYGBgIn0= -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxua25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKVxua25pdHI6Om9wdHNfY2h1bmskc2V0KGZpZy53aWR0aD0xNCwgZmlnLmhlaWdodD0xMCkgXG5cblxuc2FwcGx5KGMoJ3RpZHl2ZXJzZScsICdkcGx5cicsICdwcm9mdmlzJyksIHJlcXVpcmUsIGNoYXJhY3Rlcj1UUlVFKVxuc2YgPC0gZnVuY3Rpb24oKSBzYXBwbHkocGFzdGUwKCcuL0Z1bmN0aW9ucy8nLCBsaXN0LmZpbGVzKCcuL0Z1bmN0aW9ucy8nKSksIHNvdXJjZSlcbnNmKClcbkRlZlBsb3RQYXJzKClcbmBgYCJ9 -->
 <pre class="r"><code>knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.width=14, fig.height=10) 
 
 
-sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)</code></pre>
+sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
+sf &lt;- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
+sf()
+DefPlotPars()</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoidGlkeXZlcnNlICAgICBkcGx5ciAgIHByb2Z2aXMgXG4gICAgIFRSVUUgICAgICBUUlVFICAgICAgVFJVRSBcbiJ9 -->
-<pre><code>tidyverse     dplyr   profvis 
-     TRUE      TRUE      TRUE </code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2YgPC0gZnVuY3Rpb24oKSBzYXBwbHkocGFzdGUwKCcuL0Z1bmN0aW9ucy8nLCBsaXN0LmZpbGVzKCcuL0Z1bmN0aW9ucy8nKSksIHNvdXJjZSlcbnNmKClcbmBgYCJ9 -->
-<pre class="r"><code>sf &lt;- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
-sf()</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gU29sdmVXaW5keUdyaWRXb3JsZCh3b3JsZF9saXN0KSA6IFxuICBhcmd1bWVudCBcImFsZ29fbGlzdFwiIGlzIG1pc3NpbmcsIHdpdGggbm8gZGVmYXVsdFxuIn0= -->
-<pre><code>Error in SolveWindyGridWorld(world_list) : 
-  argument &quot;algo_list&quot; is missing, with no default</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <div id="book-notes" class="section level1">
