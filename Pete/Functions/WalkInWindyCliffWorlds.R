@@ -106,7 +106,7 @@ EvalMoveAttempt <- function(
     reward <- g_rew
     s_prime <- put_new_state
     if (!quiet) cat("\n (S') and that's great because as it turns out 
-                     that's the goal state! \n (R) Our reward is",  reward)
+                     that's the goal state! (•‿•) \n (R) Our reward is",  reward)
   # If not the goal state..
   } else {
     # .. and would take us off the grid .. 
@@ -254,7 +254,7 @@ DoEpisode <- function(world_list,
     action_list[[t_step]] <- action
     
     # Only assign A <- A' for on-policy SARSA..
-    if (algo_list$alg == "SARSA" & t_step > 1) {
+    if (algo_list$alg == "SARSA") { # & t_step > 1
       if (algo_list$pars$on_or_off == "on") {
         action <- a_prime
       }
@@ -264,11 +264,13 @@ DoEpisode <- function(world_list,
     state_list[[t_step]] <- s_prime
     reward_list[[t_step]] <- reward
     
-    if (!control_opts$quiet) cat('\n Time step:', t_step)
     t_step <- t_step+1
     # .. but always advance state
-    if (t_step > 1) state <- s_prime 
-    
+    if (t_step > 1) {
+      state <- s_prime 
+      if (!control_opts$quiet) cat("\n (S) S <- S', S=", state)
+    }
+    if (!control_opts$quiet) cat("\n Time step:", t_step)
   } # END EPISODE LOOP
   
 outs <- list("Q_SA_mat"=Q_SA_mat, 
@@ -340,21 +342,23 @@ SARSAUpdateQSA <- function(Q_SA_mat,
   QSA_val <- Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, ]$value
   QSprApr_val <- Q_SA_mat[Q_SA_mat$s == s_prime & Q_SA_mat$a == a_prime, ]$value
   
-  # Update Q(S, A) value in dataframe
-  Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
-    QSA_val + alpha * (reward + gamma * QSprApr_val - QSA_val)
-  
   if (!control_opts$quiet) {
     cat("\n\n ## SARSA UPDATE ##\n")
     cat("\n Right side: Current Q_sa:", QSA_val, "+",
         " alpha =", alpha, "* (R", reward, "+ gamma", gamma, 
         "* Q(S',A')", QSprApr_val, "- Q(S,A)", QSA_val, ")"
-        )
-    cat("\n Q(SA)")
+    )
+  }
+  
+  # Update Q(S, A) value in dataframe
+  Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
+    QSA_val + alpha * (reward + gamma * QSprApr_val - QSA_val)
+  
+  if (!control_opts$quiet) {
+    cat("\n Left side now: Q(SA)")
     print(unlist(
       Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"])
     )
-    
   } 
   
 Q_SA_mat  
@@ -373,11 +377,7 @@ QLearnUpdateQSA <- function(Q_SA_mat,
                            filter(s == s_prime) %>% 
                            select("value")
                           )[1]
-
-  # Update Q(S, A) value in dataframe
-  Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
-    QSA_val + alpha * (reward + gamma * max_sprime_value - QSA_val)
-
+  
   if (!control_opts$quiet) {
     cat("\n\n ## Q-learning UPDATE ##\n")
     cat("\n Right side: \n current Q_sa:", QSA_val, 
@@ -386,7 +386,14 @@ QLearnUpdateQSA <- function(Q_SA_mat,
         "max a from Q(S',A')", max_sprime_value, "- Q(S,A)", QSA_val, "] =\n", 
         (reward + gamma * max_sprime_value - QSA_val) 
     )
-    cat("\n Q(SA)")
+  }
+  
+  # Update Q(S, A) value in dataframe
+  Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
+    QSA_val + alpha * (reward + gamma * max_sprime_value - QSA_val)
+
+  if (!control_opts$quiet) {
+    cat("\n Left side Q(SA)")
     print(unlist(
       Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"])
     )
