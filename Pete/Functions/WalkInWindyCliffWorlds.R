@@ -123,7 +123,7 @@ EvalMoveAttempt <- function(
         # .. drats!
         reward <- cliff_rew
         s_prime <- start_state
-        if (!quiet) cat("\n (S') \n ---- OH HORROR OF ALL HORRORS WE JUMPED INTO THE CLIFF--
+        if (!quiet) cat("\n (S') \n ----OH HORROR OF ALL HORRORS WE JUMPED INTO THE CLIFF----
                         \n Returning to starting state", s_prime, ".",
                         "\n (R) Our reward is",  reward)
         #pause(1)
@@ -259,8 +259,6 @@ DoEpisode <- function(world_list,
         action <- a_prime
       }
     }
-    # .. but always advance state
-    if (t_step > 1) state <- s_prime # ** shouldn't this be below t_step?
     
     ## Remember state advance and reward
     state_list[[t_step]] <- s_prime
@@ -268,6 +266,8 @@ DoEpisode <- function(world_list,
     
     if (!control_opts$quiet) cat('\n Time step:', t_step)
     t_step <- t_step+1
+    # .. but always advance state
+    if (t_step > 1) state <- s_prime 
     
   } # END EPISODE LOOP
   
@@ -346,9 +346,8 @@ SARSAUpdateQSA <- function(Q_SA_mat,
   
   if (!control_opts$quiet) {
     cat("\n\n ## SARSA UPDATE ##\n")
-    cat("\n Right side: 
-        \n Current Q_sa:", QSA_val, 
-        "\n + alpha =", alpha, "* \n (R", reward, "+ gamma", gamma, 
+    cat("\n Right side: Current Q_sa:", QSA_val, "+",
+        " alpha =", alpha, "* (R", reward, "+ gamma", gamma, 
         "* Q(S',A')", QSprApr_val, "- Q(S,A)", QSA_val, ")"
         )
     cat("\n Q(SA)")
@@ -414,7 +413,7 @@ visualize <- 1 # output graphs?
 n_episodes <- 1e2
 # Which algorithm do you want to learn with? (TO DO: only SARSA on-policy implemented so far)
 # 1 "SARSA"--and can set on- vs. off- policy below in SARSA's pars
-which_algo <- "Q_learning"
+which_algo <- "SARSA"
 ## Set world options ##
 # Which world do you want? (TO DO: only windy grid world constructed so far)
 # 1 "windy" for windy grid world
@@ -464,7 +463,7 @@ diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
 # "basic" = base actions only
 # "kings" = base + diagonal (king's rules) 
 # "kings_plus" = king's rules + same state
-action_type <- "base"
+action_type <- "kings"
 # TO DO: implement softmax and other soft varieties
 soft_policy <- "eps_greedy"
 if (soft_policy == "eps_greedy") softness <- .1
