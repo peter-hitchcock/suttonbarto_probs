@@ -14,8 +14,8 @@ SolveWindyOrCliffWorlds <- function(world_list,
   if (world_list$action_type=="kings") world_list$actions <- c(base_actions, diag_actions)
   if (world_list$action_type=="kings_plus") world_list$actions <- c(base_actions, diag_actions, 0)
   
-  if (algo_list$alg=="SARSA") {
-    algo_list[["Q_SA_mat"]] <- InitSARSA_Q_SA(world_list, algo_list$pars)
+  if (algo_list$alg=="SARSA" | algo_list$alg=="Q_learning") {
+    algo_list[["Q_SA_mat"]] <- InitQ_SA(world_list, algo_list$pars)
   }
   
   ep_counter <- 1
@@ -177,46 +177,43 @@ DoEpisode <- function(world_list,
   if (!control_opts$quiet) cat('\n Time step:', t_step, '\n (S) Our state is:', state)
   
   ## For SARSA, pick an action before looping so we can get our first update
-  if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
-    action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
-    if (!quiet) cat('\n (A) First action:', action)
-    action_list[[t_step]] <- action
-  }
   
+  if (algo_list$alg == "SARSA") {
+    if (algo_list$pars$on_or_off == "on") {
+      action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
+      if (!quiet) cat('\n (A) First action:', action)
+      action_list[[t_step]] <- action
+    }
+  }
+
   while (!state == goal_state & t_step < 5e4) {
-    
-    if (algo_list$alg == "Q_learn") {
-      # TO DO: select action
+    if (algo_list$alg == "Q_learning") {
+      action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
+      if (!quiet) cat('\n (A) First action:', action)
+      action_list[[t_step]] <- action
     }
     
     # No chance of wind on first trial
     if (t_step == 1) put_new_state <- state+action
     # Putative new state = state + action + wind..
     if (!quiet) cat("\n (A) We take action A:", action, ".")
-    
     if (world_list$environ == "cliff_walk") {
-      # No wind in regular cliff world
+      # however, there's no wind in regular cliff world, so just set to 0
       wind <- 0
-      partial_str <- "T"
+      partial_str <- "\n T"
     } else {
       wind <- RideTheWind(world_list,
                           put_new_state,
                           windy_states)
-      partial_str <- "Combined with the wind t"
+      partial_str <- "\n Combined with the wind t"
     }
-    
-    
-    
+    # .. giving our putative new state
     put_new_state <- state + action + wind # S <- S' is at bottom of loop
+    if (!quiet) cat(paste0(partial_str, "hat putatively puts us in state"), 
+                    put_new_state, ".")
     
-    if (!quiet) {
-      cat(paste0(partial_str, "hat putatively puts us in state"), 
-          put_new_state, ".")
-    }
-    
-    
-    #.. but need to evaluate whether this is a valid state transition,
-    # returning s',r where s' = s if not
+    # However we need to evaluate if this is a valid state transition
+    # This does so and returns s',r where s' = s if not
     sp_r <- EvalMoveAttempt(state,
                             put_new_state,
                             goal_state,
@@ -231,11 +228,13 @@ DoEpisode <- function(world_list,
     s_prime <- sp_r[["s_prime"]]
     reward <- sp_r[["reward"]]
     
-    if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
-      # Now that we have s'r we can get A'..
-      a_prime <- SelActOnPolicySARSA(Q_SA_mat, state=s_prime)
+    if (algo_list$alg == "SARSA") {
+      if (algo_list$pars$on_or_off == "on") {
+        # Now that we have s'r we can get A'..
+        a_prime <- SelActOnPolicySARSA(Q_SA_mat, state=s_prime)
+      }
+      if (!quiet) cat("\n (A') We pick next action:", a_prime)
     }
-    if (!quiet) cat("\n (A') We pick next action:", a_prime)
     
     # .. and do appropriate update
     if (algo_list$alg == "SARSA") {
@@ -243,18 +242,29 @@ DoEpisode <- function(world_list,
                                  action, state, a_prime, s_prime,
                                  reward, gamma, alpha, control_opts)
     }
-    
-    if (algo_list$alg == "Q_learn") {
-      
+    if (algo_list$alg == "Q_learning") {
+      Q_SA_mat <- QLearnUpdateQSA(Q_SA_mat,
+                                  # note we need A for updating appropraite row, but not A'
+                                  state, action, s_prime,
+                                  reward, gamma, alpha, control_opts
+                                  )
     }
     
-    if (t_step > 1) {
-      state <- s_prime
-      action <- a_prime
+    # Remember action
+    action_list[[t_step]] <- action
+    
+    # Only assign A <- A' for on-policy SARSA..
+    if (algo_list$alg == "SARSA" & t_step > 1) {
+      if (algo_list$pars$on_or_off == "on") {
+        action <- a_prime
+      }
     }
+    # .. but always advance state
+    if (t_step > 1) state <- s_prime # ** shouldn't this be below t_step?
+    
     ## Remember state advance and reward
-    action_list[[t_step]] <- a_prime
     state_list[[t_step]] <- s_prime
+    reward_list[[t_step]] <- reward
     
     if (!control_opts$quiet) cat('\n Time step:', t_step)
     t_step <- t_step+1
@@ -263,7 +273,9 @@ DoEpisode <- function(world_list,
   
 outs <- list("Q_SA_mat"=Q_SA_mat, 
              "state_trajectory"=state_list,
-             "rewards"=reward_list)    
+             "rewards"=reward_list,
+             "action_list"=action_list,
+             "state_list"=state_list)    
 }
 ########################### GENERAL RL FUNCTIONS #####################
 SoftSelect <- function(
@@ -295,8 +307,8 @@ action
 ######################################################################
 ############### ALGORITHM SPECIFIC RL FUNCTIONS ######################
 ## SARSA ##
-InitSARSA_Q_SA <- function(world_list,
-                           pars) {
+InitQ_SA <- function(world_list,
+                      pars) {
   ### Build initial Q_SA_matrix for SARSA ###
   
   # Initalize Q(S,A) matrix..
@@ -334,8 +346,9 @@ SARSAUpdateQSA <- function(Q_SA_mat,
   
   if (!control_opts$quiet) {
     cat("\n\n ## SARSA UPDATE ##\n")
-    cat("\n Right side: current Q_sa:", QSA_val, 
-        "\n + alpha =", alpha, "* (R", reward, "+ gamma", gamma, 
+    cat("\n Right side: 
+        \n Current Q_sa:", QSA_val, 
+        "\n + alpha =", alpha, "* \n (R", reward, "+ gamma", gamma, 
         "* Q(S',A')", QSprApr_val, "- Q(S,A)", QSA_val, ")"
         )
     cat("\n Q(SA)")
@@ -346,6 +359,41 @@ SARSAUpdateQSA <- function(Q_SA_mat,
   } 
   
 Q_SA_mat  
+}
+QLearnUpdateQSA <- function(Q_SA_mat,
+                            state, action, s_prime, # ** remember to add this 
+                            reward, gamma, alpha, control_opts) {
+  
+  ### Perform Q learning update returning updated Q(S,A) matrix ###
+  
+  # Extract Q(S, A)..
+  QSA_val <- Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, ]$value
+  # .. and the max value of the next action, randomly breaking ties
+  
+  max_sprime_value <- max(Q_SA_mat %>% 
+                           filter(s == s_prime) %>% 
+                           select("value")
+                          )[1]
+
+  # Update Q(S, A) value in dataframe
+  Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
+    QSA_val + alpha * (reward + gamma * max_sprime_value - QSA_val)
+
+  if (!control_opts$quiet) {
+    cat("\n\n ## Q-learning UPDATE ##\n")
+    cat("\n Right side: \n current Q_sa:", QSA_val, 
+        "\n + alpha =", alpha, 
+        "\n PE = [ (R", reward, "+ gamma", gamma, 
+        "max a from Q(S',A')", max_sprime_value, "- Q(S,A)", QSA_val, "] =\n", 
+        (reward + gamma * max_sprime_value - QSA_val) 
+    )
+    cat("\n Q(SA)")
+    print(unlist(
+      Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"])
+    )
+  }
+  
+Q_SA_mat    
 }
 SelActOnPolicySARSA <- function(Q_SA_mat, state) {
   ### Select an on-policy action|state following p. 130 SARSA algo ###
@@ -366,13 +414,13 @@ visualize <- 1 # output graphs?
 n_episodes <- 1e2
 # Which algorithm do you want to learn with? (TO DO: only SARSA on-policy implemented so far)
 # 1 "SARSA"--and can set on- vs. off- policy below in SARSA's pars
-which_algo <- "SARSA"
+which_algo <- "Q_learning"
 ## Set world options ##
 # Which world do you want? (TO DO: only windy grid world constructed so far)
 # 1 "windy" for windy grid world
 # 2 "cliff_walk" for cliff walk world
 # 3 "windy_cliff_walk" if you really want to get crazy
-environ <- "cliff_walk" 
+environ <- "windy" 
 # Set dimensions of world
 if (environ == "windy") { 
   rows <- 7; cols <- 10 
@@ -402,7 +450,7 @@ if (environ == "windy") {
                    c(start_state, goal_state))
 }
 # For windy worlds, set second arg to 1 for stochastic wind blows
-noisy_wind <- ifelse(grepl("windy", environ), 1, 0)
+noisy_wind <- ifelse(grepl("windy", environ), 0, 0)
 # Reward for reaching goal / non-goal state
 non_goal_rewards <- -1 
 goal_reward <- 0
