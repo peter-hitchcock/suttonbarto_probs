@@ -1,0 +1,28 @@
+---
+title: "Chapter 7: n-step Bootstrapping"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=14, fig.height=10)
+```
+
+
+```{r other setup }
+sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
+sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
+#sf()
+#DefPlotPars()
+```
+
+# Book notes 
+Neither MC nor TD are best for all situations; this chapter casts them as opposite ends of the spectrum and n-step methods unify them so in practice you can pick the best for a given situation.  
+
+The downside of one-step TD methods are they yoke how often you can change the action to the time interval over which bootstrapping takes place; n-step frees you from this. This is bad because it's often most beneficial to bootstrap once some time has passed so that there's been a change worth using, whereas you want to change the action very fast. Thus n-step methods are simply the intermediate options between otoh waiting all the way until the end of an episode to use the rewards gained in your updates (MC) and bootstrapping soley based on the reward + value of next state; 2-step would update based on the next 2 rewards and discounted V(s') and V(s'') and so on.  
+
+
+
+
+
+
