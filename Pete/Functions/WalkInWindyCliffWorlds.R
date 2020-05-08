@@ -52,7 +52,7 @@ RideTheWind <- function(world_list,
                         windy_states) {
   ### Perturbs actions by stochastic or deterministic wind,
   # outputting wind amount ###
-  
+
   ## Add wind
   # If this is a windy state..
   if (any(put_new_state == windy_states)) {
@@ -178,7 +178,6 @@ DoEpisode <- function(world_list,
   if (!control_opts$quiet) cat('\n Time step:', t_step, '\n (S) Our state is:', state)
   
   ## For SARSA, pick an action before looping so we can get our first update
-  
   if (algo_list$alg == "SARSA") {
     if (algo_list$pars$on_or_off == "on") {
       action <- SelActOnPolicySARSA(Q_SA_mat, state=state)

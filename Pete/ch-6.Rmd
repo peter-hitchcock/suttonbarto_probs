@@ -18,13 +18,13 @@ DefPlotPars()
 ```{r}
 ########################### INTIALIZATIONS ###########################
 ## Set control options ##
-quiet <- 1 # print trial-by-trial 
+quiet <- 0 # print trial-by-trial 
 visualize <- 1 # output graphs?
 n_episodes <- 1000
 # Which algorithm do you want to learn with? (TO DO: only SARSA on-policy implemented so far)
 # 1 "SARSA"--and can set on- vs. off- policy below in SARSA's pars
 # 2 "Q_learning"
-which_algo <- "SARSA"
+which_algo <- "Q_learning"
 ## Set world options ##
 # Which world do you want? (TO DO: only windy grid world constructed so far)
 # 1 "windy" for windy grid world
@@ -60,7 +60,7 @@ if (environ == "windy") {
                    c(start_state, goal_state))
 }
 # For windy worlds, set second arg to 1 for stochastic wind blows
-noisy_wind <- ifelse(grepl("windy", environ), 0, 0)
+noisy_wind <- ifelse(grepl("windy", environ), 1, 0)
 # Reward for reaching goal / non-goal state
 non_goal_rewards <- -1 
 goal_reward <- 0
@@ -74,7 +74,7 @@ diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
 # "basic" = base actions only
 # "kings" = base + diagonal (king's rules) 
 # "kings_plus" = king's rules + same state
-action_type <- "kings"
+action_type <- "base"
 # TO DO: implement softmax and other soft varieties
 soft_policy <- "eps_greedy"
 if (soft_policy == "eps_greedy") softness <- .1
@@ -84,7 +84,7 @@ if (soft_policy == "eps_greedy") softness <- .1
 if (which_algo=="SARSA") {
   pars <- list(
     "softness"=softness, # for soft action selection
-    "alpha"=.5, # learning rate
+    "alpha"=.1, # learning rate
     "gamma"=1, # discount 
     "zero_init_values"=1, # how to inialize q values
     "on_or_off"="on", # TO DO: edit, others not yet implemented
@@ -126,6 +126,7 @@ control_opts <- list("quiet"=quiet,
                      "ts"=1,
                      "vis"=vis_list)
 
+SolveWindyOrCliffWorlds(world_list, algo_list, control_opts)
 outs <- SolveWindyOrCliffWorlds(world_list, algo_list, control_opts)
 ```
 
@@ -180,7 +181,7 @@ for (es in 1:(length(ep_seq)-1)) {
   
   print(ggplot(action_var, aes(cs, rs)) + geom_tile(aes(fill=n_actions)) + ga + ap + lp +
      xlab("") + ylab("")) + 
-    scale_fill_gradient2(low = "blue", high = "red", mid = "white")
+    scale_fill_gradient2(low = "yellow", high = "red", mid = "white")
 }
 ```
 
