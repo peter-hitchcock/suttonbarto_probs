@@ -10,9 +10,181 @@ knitr::opts_chunk$set(fig.width=14, fig.height=10)
 
 sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
 sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
-#sf()
+sf()
 DefPlotPars()
 ```
+
+
+```{r}
+########################### INTIALIZATIONS ###########################
+## Set control options ##
+quiet <- 0 # print trial-by-trial 
+visualize <- 1 # output graphs?
+n_episodes <- 1000
+# Which algorithm do you want to learn with? (TO DO: only SARSA on-policy implemented so far)
+# 1 "SARSA"--and can set on- vs. off- policy below in SARSA's pars
+# 2 "Q_learning"
+which_algo <- "Q_learning"
+## Set world options ##
+# Which world do you want? (TO DO: only windy grid world constructed so far)
+# 1 "windy" for windy grid world
+# 2 "cliff_walk" for cliff walk world
+# 3 "windy_cliff_walk" if you really want to get crazy
+environ <- "windy" 
+# Set dimensions of world
+if (environ == "windy") { 
+  rows <- 7; cols <- 10 
+} else {
+  rows <- 4; cols <- 12
+}
+grid_world <- CreateGridworld(rows, cols)
+# Winds by column given in matrix indices the wind moves us
+winds <- rep(0, cols) # default to no wind
+# Where and how much wind do you want in your windy worlds?
+if (environ == "windy" | environ == "cliff_walk") {
+  winds <- rep(0, cols)
+  # Note that wind in the first or second columns won't work for SARSA
+  winds[4:9] <- c(rows, rows, rows, rows+1, rows+1, rows)
+} 
+if (environ == "windy") {
+  start_state <- round(rows/2) # start at the middle + 1
+  # This is difficult to avoid hard coding, but may need to tweak this depending 
+  # on row, col settings
+  goal_state <- 53
+  cliff <- c() # no cliff in regular windy world
+} else {
+  start_state <- nrow(grid_world) # start in the bottom left..
+  goal_state <- nrow(grid_world) * ncol(grid_world) # ..reach goal in the bottom right..
+  # .. alas, The Abyss lies between them
+  cliff <- setdiff(grid_world[nrow(grid_world), ], 
+                   c(start_state, goal_state))
+}
+# For windy worlds, set second arg to 1 for stochastic wind blows
+noisy_wind <- ifelse(grepl("windy", environ), 1, 0)
+# Reward for reaching goal / non-goal state
+non_goal_rewards <- -1 
+goal_reward <- 0
+cliff_rewards <- -100
+is_there_a_cliff <- 1
+# Up down left and right in matrix indexing
+base_actions <- c(1, -1, rows, -rows)
+# Diagonal actions in matrix indexing
+diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
+# Set action type:
+# "basic" = base actions only
+# "kings" = base + diagonal (king's rules) 
+# "kings_plus" = king's rules + same state
+action_type <- "base"
+# TO DO: implement softmax and other soft varieties
+soft_policy <- "eps_greedy"
+if (soft_policy == "eps_greedy") softness <- .1
+######################################################################
+###################### PACKAGE INITS INTO LISTS ######################
+# Package up pars to run algos
+if (which_algo=="SARSA") {
+  pars <- list(
+    "softness"=softness, # for soft action selection
+    "alpha"=.1, # learning rate
+    "gamma"=1, # discount 
+    "zero_init_values"=1, # how to inialize q values
+    "on_or_off"="on", # TO DO: edit, others not yet implemented
+    "soft_policy"=soft_policy
+  )
+}
+if (which_algo=="Q_learning") {
+  pars <- list(
+    "softness"=softness,
+    "alpha"=.3, # learning rate
+    "gamma"=1, # discount
+    "zero_init_values"=1, # how to inialize q values
+    "soft_policy"=soft_policy
+  )
+}
+algo_list <- list("alg"=which_algo, "pars"=pars)
+# Package up world items
+world_list <- list(
+  "environ"=environ,
+  "grid_world"=grid_world,
+  "winds"=winds,
+  "base_actions"=base_actions,
+  "diag_actions"=diag_actions,
+  "action_type"=action_type,
+  "start_state"=start_state,
+  "goal_state"=goal_state,
+  "ng_rews"=non_goal_rewards,
+  "g_rew"=goal_reward,
+  "is_there_a_cliff"=is_there_a_cliff,
+  "cliff_rews"=cliff_rewards,
+  "cliff"=cliff,
+  "noisy_wind"=noisy_wind
+)
+# Package up control and debug options
+# TO DO: placeholder for vis options
+vis_list <- list()
+control_opts <- list("quiet"=quiet, 
+                     "n_episodes"=n_episodes,
+                     "ts"=1,
+                     "vis"=vis_list)
+
+SolveWindyOrCliffWorlds(world_list, algo_list, control_opts)
+outs <- SolveWindyOrCliffWorlds(world_list, algo_list, control_opts)
+```
+
+
+```{r}
+CreateEpDf <- function(episode, rows) {
+        
+        qsa_mat <- episode[["Q_SA_mat"]]
+        
+        states <- unlist(episode[["state_list"]])
+        
+        rs <- states %% rows
+        rs[rs == 0] <- rows 
+        cs <- ceiling(states/rows)
+        
+        ep_df <- setNames(data.frame(cbind(rs,
+                                           cs,
+                                           states,
+                                           unlist(episode[["rewards"]]),
+                                           unlist(episode[["action_list"]]),
+                                           1:length(rs))), 
+                          c("y", "x", "states", "rewards", "actions", "index"))
+        #ep_df$actions <- as.factor(ep_df$actions)
+        #ep_df$actions <- as.numeric(as.character(ep_df$actions))
+ep_df        
+}
+FindRowCols <- function(states, rows) {
+  ### Find row, col indices in grid world of states
+      rs <- states %% rows
+      rs[rs == 0] <- rows 
+      cs <- ceiling(states/rows)
+list("rs"=rs, "cs"=cs)      
+}
+
+ep_seq <- seq(1, 1000, 10)
+
+for (es in 1:(length(ep_seq)-1)) {
+  get_eps <- c(ep_seq[es]:ep_seq[es+1])
+  
+  ep_df_ls <- list()
+  for (e in seq_along(get_eps)) ep_df_ls[[e]] <- data.frame("episode"=get_eps[e], CreateEpDf(outs[[get_eps[e]]], rows))
+  ep <- ep_df_ls %>% bind_rows()
+  
+  a <- table(ep$states, ep$actions) == 0
+  states <- as.numeric(dimnames(table(ep$states, ep$actions))[[1]])
+  n_actions <- rep(NA, length(states))
+  # Find the number of unique actions taken in this state by finding which action counts are non-zero..
+  n_acts_table <- table(ep$states, ep$actions) == 0
+  # .. and store these
+  for (n_act in seq_along(n_actions)) n_actions[n_act] <- length(which(n_acts_table[n_act, ] == 0))
+  action_var <- data.frame(FindRowCols(states, rows), "n_actions"=n_actions, "states"=states)
+  
+  print(ggplot(action_var, aes(cs, rs)) + geom_tile(aes(fill=n_actions)) + ga + ap + lp +
+     xlab("") + ylab("")) + 
+    scale_fill_gradient2(low = "yellow", high = "red", mid = "white")
+}
+```
+
 
 # Book notes 
 
@@ -63,7 +235,16 @@ $$ Q(S_t, A_t) = Q(S_t, A_t) + \alpha[R_{t+1} + \gamma \ max_a \ Q(S_{t+1},a) - 
 
 Critically, this decouples the value estimation from the policy being followed.  
 
-Besides taking the max, the key differences algorithmically are that you can take the first action in the loop through time steps because you're updating based on the results of action $A$ (+ reward + max value) rather than $A'$. For the same reason, you don't update A->A' at the end, as instead of coupling your action steps to your changing value estimate, you are selecting actions anew based on the value estimate.  
+Besides taking the max, the key differences algorithmically are that you can take the first action in the loop through time steps because you're updating based on the results of action $A$ (+ reward + max value) rather than the update depending on having taken $A'$. For the same reason, you don't update $A \gets A'$ at the end, as instead of coupling your action steps to your changing value estimate, you are selecting actions anew based on the value estimate.  
+
+*6.11: Why is Q-learning off-policy?*  
+*A:* Except in the special case of a deterministic greedy policy, the actions actually taken online are not the same as those used to update the policy offline. Although the specific algorithms are different, this makes it analogous to the off-policy cases we discussed last chapter where we followed some behavioral policy but then updated our value function in a different way (in that case via some importance sampling scheme determining how relevant the behavior taken was to the policy we were estimating, in this case via the estimate of the max of $Q(S_{t+1} A_{t+1})$). 
+
+As a consequence of decoupling its actions from what it estimates to be best, Q-learning can even asymptotically behave badly. In the cliff-walking example, Q-learning learns $q*$ offline but online it acts $\epsilon$-greedily. So it learns if it will only follow $q*$ but in practice falls short of this, leading to dire consequences. In contrast, online SARSA's update is based directly on A', so it will learn the less optimal policy of staying away from the cliff edge, which works out better for it when in practice it doesn't follow a deterministic action policy. 
+
+*6.12* As $0 \gets \epsilon$, these are the same algorithm because $A \gets A'$ in SARSA is based on the max, leading the same number to be used in the updating.  
+
+
 
 
 

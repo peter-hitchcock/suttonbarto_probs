@@ -1,10 +1,10 @@
 #### FUNCTIONS TO CREATE WINDY GRIDWORLD (CH 6) AND SOLVE VIA DIFF RL METHODS ####
 ######################################################################
-SolveWindyGridWorld <- function(world_list,
-                                # Name and specs for RL algorithm to implement,
-                                # defaults to SARSA
-                                algo_list,
-                                control_opts
+SolveWindyOrCliffWorlds <- function(world_list,
+                                    # Name and specs for RL algorithm to implement,
+                                    # defaults to SARSA
+                                    algo_list,
+                                    control_opts 
 ) {
   ### Outer environment to call RL solutions to windy gridworld. Returns
   # policy and other information for the algorithm / parameters initialized ###
@@ -14,8 +14,8 @@ SolveWindyGridWorld <- function(world_list,
   if (world_list$action_type=="kings") world_list$actions <- c(base_actions, diag_actions)
   if (world_list$action_type=="kings_plus") world_list$actions <- c(base_actions, diag_actions, 0)
   
-  if (algo_list$alg=="SARSA") {
-    algo_list[["Q_SA_mat"]] <- InitSARSA_Q_SA(world_list, algo_list$pars)
+  if (algo_list$alg=="SARSA" | algo_list$alg=="Q_learning") {
+    algo_list[["Q_SA_mat"]] <- InitQ_SA(world_list, algo_list$pars)
   }
   
   ep_counter <- 1
@@ -23,7 +23,7 @@ SolveWindyGridWorld <- function(world_list,
   outs_list <- list()
   for (ep in seq_along(1:control_opts$n_episodes)) {
     
-    if (!control_opts$quiet) { cat('\n##### NEW EPISODE ##########\n'); pause(1) }
+    if (!control_opts$quiet) { cat('\n##### NEW EPISODE ##########\n'); pause(2) }
     
     outs <- DoEpisode(world_list,
                       algo_list,
@@ -34,14 +34,14 @@ SolveWindyGridWorld <- function(world_list,
     if (algo_list$alg=="SARSA") algo_list[["Q_SA_mat"]] <- outs[["Q_SA_mat"]]
     
     # Store the outcomes
-    outs_list[[ep]] <- outs
+    outs_list[[paste0("ep", ep)]] <- outs
     
     ep_counter <- ep_counter+1
   }  
-outs    
+outs_list   
 }
 ########################### WORLD FUNCTIONS ###########################
-CreateWindyGridworld <- function(rows=7, columns=10) {
+CreateGridworld <- function(rows=7, columns=10) {
   ### Returns a gridworld incl optional args if want to use 
   # diff dimensions than book ###
   world <- matrix(1:(rows*columns), nrow=rows, ncol=columns)
@@ -52,7 +52,7 @@ RideTheWind <- function(world_list,
                         windy_states) {
   ### Perturbs actions by stochastic or deterministic wind,
   # outputting wind amount ###
-  
+
   ## Add wind
   # If this is a windy state..
   if (any(put_new_state == windy_states)) {
@@ -85,12 +85,18 @@ RideTheWind <- function(world_list,
   }
 wind  
 }
-EvalMoveAttempt <- function(state,
+EvalMoveAttempt <- function(
+                            state,
                             put_new_state,
                             goal_state,
                             world,
                             ng_rew,
-                            g_rew) {
+                            g_rew,
+                            cliff_rew, 
+                            is_there_a_cliff, # indicator 
+                            cliff, # cliff indices
+                            start_state # to return to if fall into the cliff
+                            ) {
   ### Returns s'r by determining whether a proposed state transition is 
   # valid ###
   
@@ -100,24 +106,37 @@ EvalMoveAttempt <- function(state,
     reward <- g_rew
     s_prime <- put_new_state
     if (!quiet) cat("\n (S') and that's great because as it turns out 
-                     that's the goal state! \n (R) Our reward is",  reward)
-    # If not the goal state..
+                     that's the goal state! \n     (•‿•)        
+                     \n (R) Our reward is",  reward)
+  # If not the goal state..
   } else {
     # .. and would take us off the grid .. 
     if (!put_new_state %in% world) {
-      # .. don't change state but do assign reward .. 
+      # .. don't change state but do assign reward. 
       reward <- ng_rew
       s_prime <- state
       if (!quiet) cat("\n (S') but that doesn't exist so we're stuck in", s_prime, ".",
                       "\n (R) Our reward is",  reward)
     } else {
-      # .. change state and assign reward
+      #  Otherwise this is a valid state, but we need to check if it's in the cliff..
+      purgatory_state <- put_new_state # .. put in holding state before we figure out if this is S'..
+      if (is_there_a_cliff & purgatory_state %in% cliff) {
+        # .. drats!
+        reward <- cliff_rew
+        s_prime <- start_state
+        if (!quiet) cat("\n (S') \n ----OH HORROR OF ALL HORRORS WE JUMPED INTO THE CLIFF----
+                        \n Returning to starting state", s_prime, ".",
+                        "\n (R) Our reward is",  reward)
+        #pause(1)
+      } else {
+      # ..this is a valid, non-cliff state transition
+      s_prime <- put_new_state
       reward <- ng_rew
-      s_prime <- put_new_state 
       if (!quiet) cat("\n (S') and that's a valid transition so we are in fact in", s_prime, ".",
                       "\n (R) Our reward is",  reward)
-    }
-  } 
+      } # END cliff state condition
+    }  # END valid state condition 
+  } # END goal state condition
   
 list("s_prime"=s_prime, "reward"=reward)  
 }
@@ -133,6 +152,10 @@ DoEpisode <- function(world_list,
   world <- world_list$grid_world
   ng_rew <- world_list$ng_rews
   g_rew <- world_list$g_rew
+  cliff_rew <- world_list$cliff_rews
+  is_there_a_cliff <- world_list$is_there_a_cliff
+  cliff <- world_list$cliff
+  start_state <- world_list$start_state
   goal_state <- world_list$goal_state
   gamma <- algo_list$pars$gamma
   alpha <- algo_list$pars$alpha
@@ -144,59 +167,74 @@ DoEpisode <- function(world_list,
   winds <- world_list$winds
   wcols <- which(winds!=0) # columns where its windy
   str_winds <- noquote(as.character(winds[wcols])) # string representation of wind
-  # .. and by by state indices, with column names = upddraft + random string
+  # Set column names = upddraft + random string
   windy_states <- setNames(data.frame(grid_world[, wcols]), paste0(str_winds))
   ######################################################################
   ########################### START EPISODE #############################
-  state <- world_list$start_state 
+  state <- start_state 
   # Initialize state and time step 
   t_step <- 1
   state_list[[t_step]] <- state
   if (!control_opts$quiet) cat('\n Time step:', t_step, '\n (S) Our state is:', state)
   
   ## For SARSA, pick an action before looping so we can get our first update
-  if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
-    action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
-    if (!quiet) cat('\n (A) First action:', action)
-    action_list[[t_step]] <- action
+  if (algo_list$alg == "SARSA") {
+    if (algo_list$pars$on_or_off == "on") {
+      action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
+      if (!quiet) cat('\n (A) First action:', action)
+      action_list[[t_step]] <- action
+    }
   }
-  
+
   while (!state == goal_state & t_step < 5e4) {
-    
-    if (algo_list$alg == "Q_learn") {
-      # TO DO: select action
+    if (algo_list$alg == "Q_learning") {
+      action <- SelActOnPolicySARSA(Q_SA_mat, state=state)
+      if (!quiet) cat('\n (A) First action:', action)
+      action_list[[t_step]] <- action
     }
     
     # No chance of wind on first trial
     if (t_step == 1) put_new_state <- state+action
     # Putative new state = state + action + wind..
     if (!quiet) cat("\n (A) We take action A:", action, ".")
-    wind <- RideTheWind(world_list,
-                        put_new_state,
-                        windy_states)
-    
-    
+    if (world_list$environ == "cliff_walk") {
+      # however, there's no wind in regular cliff world, so just set to 0
+      wind <- 0
+      partial_str <- "\n T"
+    } else {
+      wind <- RideTheWind(world_list,
+                          put_new_state,
+                          windy_states)
+      partial_str <- "\n Combined with the wind t"
+    }
+    # .. giving our putative new state
     put_new_state <- state + action + wind # S <- S' is at bottom of loop
+    if (!quiet) cat(paste0(partial_str, "hat putatively puts us in state"), 
+                    put_new_state, ".")
     
-    cat("\n Combined with the wind that putatively puts us in state", put_new_state, ".")
-    
-    #.. but need to evaluate whether this is a valid state transition,
-    # returning s',r where s' = s if not
+    # However we need to evaluate if this is a valid state transition
+    # This does so and returns s',r where s' = s if not
     sp_r <- EvalMoveAttempt(state,
                             put_new_state,
                             goal_state,
                             world,
                             ng_rew,
-                            g_rew) 
+                            g_rew,
+                            cliff_rew,
+                            is_there_a_cliff, 
+                            cliff, 
+                            start_state)
     
     s_prime <- sp_r[["s_prime"]]
     reward <- sp_r[["reward"]]
     
-    if (algo_list$alg == "SARSA" & algo_list$pars$on_or_off == "on") {
-      # Now that we have s'r we can get A'..
-      a_prime <- SelActOnPolicySARSA(Q_SA_mat, state=s_prime)
+    if (algo_list$alg == "SARSA") {
+      if (algo_list$pars$on_or_off == "on") {
+        # Now that we have s'r we can get A'..
+        a_prime <- SelActOnPolicySARSA(Q_SA_mat, state=s_prime)
+      }
+      if (!quiet) cat("\n (A') We pick next action:", a_prime)
     }
-    if (!quiet) cat("\n (A') We pick next action:", a_prime)
     
     # .. and do appropriate update
     if (algo_list$alg == "SARSA") {
@@ -204,27 +242,42 @@ DoEpisode <- function(world_list,
                                  action, state, a_prime, s_prime,
                                  reward, gamma, alpha, control_opts)
     }
-    
-    if (algo_list$alg == "Q_learn") {
-      
+    if (algo_list$alg == "Q_learning") {
+      Q_SA_mat <- QLearnUpdateQSA(Q_SA_mat,
+                                  # note we need A for updating appropraite row, but not A'
+                                  state, action, s_prime,
+                                  reward, gamma, alpha, control_opts
+                                  )
     }
     
-    if (t_step > 1) {
-      state <- s_prime
-      action <- a_prime
+    # Remember action
+    action_list[[t_step]] <- action
+    
+    # Only assign A <- A' for on-policy SARSA..
+    if (algo_list$alg == "SARSA") { # & t_step > 1
+      if (algo_list$pars$on_or_off == "on") {
+        action <- a_prime
+      }
     }
+    
     ## Remember state advance and reward
-    action_list[[t_step]] <- a_prime
     state_list[[t_step]] <- s_prime
+    reward_list[[t_step]] <- reward
     
-    if (!control_opts$quiet) cat('\n Time step:', t_step)
     t_step <- t_step+1
-    
+    # .. but always advance state
+    if (t_step > 1) {
+      state <- s_prime 
+      if (!control_opts$quiet) cat("\n (S) S <- S', S=", state)
+    }
+    if (!control_opts$quiet) cat("\n Time step:", t_step)
   } # END EPISODE LOOP
   
 outs <- list("Q_SA_mat"=Q_SA_mat, 
              "state_trajectory"=state_list,
-             "rewards"=reward_list)    
+             "rewards"=reward_list,
+             "action_list"=action_list,
+             "state_list"=state_list)    
 }
 ########################### GENERAL RL FUNCTIONS #####################
 SoftSelect <- function(
@@ -256,8 +309,8 @@ action
 ######################################################################
 ############### ALGORITHM SPECIFIC RL FUNCTIONS ######################
 ## SARSA ##
-InitSARSA_Q_SA <- function(world_list,
-                           pars) {
+InitQ_SA <- function(world_list,
+                      pars) {
   ### Build initial Q_SA_matrix for SARSA ###
   
   # Initalize Q(S,A) matrix..
@@ -289,24 +342,64 @@ SARSAUpdateQSA <- function(Q_SA_mat,
   QSA_val <- Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, ]$value
   QSprApr_val <- Q_SA_mat[Q_SA_mat$s == s_prime & Q_SA_mat$a == a_prime, ]$value
   
+  if (!control_opts$quiet) {
+    cat("\n\n ## SARSA UPDATE ##\n")
+    cat("\n Right side: Current Q_sa:", QSA_val, "+",
+        " alpha =", alpha, "* (R", reward, "+ gamma", gamma, 
+        "* Q(S',A')", QSprApr_val, "- Q(S,A)", QSA_val, ")"
+    )
+  }
+  
   # Update Q(S, A) value in dataframe
   Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
     QSA_val + alpha * (reward + gamma * QSprApr_val - QSA_val)
   
   if (!control_opts$quiet) {
-    cat("\n\n ## SARSA UPDATE ##\n")
-    cat("\n Right side: current Q_sa:", QSA_val, 
-        "\n + alpha =", alpha, "* (R", reward, "+ gamma", gamma, 
-        "* Q(S',A')", QSprApr_val, "- Q(S,A)", QSA_val, ")"
-        )
-    cat("\n Q(SA)")
+    cat("\n Left side now: Q(SA)")
     print(unlist(
       Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"])
     )
-    
   } 
   
 Q_SA_mat  
+}
+QLearnUpdateQSA <- function(Q_SA_mat,
+                            state, action, s_prime, # ** remember to add this 
+                            reward, gamma, alpha, control_opts) {
+  
+  ### Perform Q learning update returning updated Q(S,A) matrix ###
+  
+  # Extract Q(S, A)..
+  QSA_val <- Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, ]$value
+  # .. and the max value of the next action, randomly breaking ties
+  
+  max_sprime_value <- max(Q_SA_mat %>% 
+                           filter(s == s_prime) %>% 
+                           select("value")
+                          )[1]
+  
+  if (!control_opts$quiet) {
+    cat("\n\n ## Q-learning UPDATE ##\n")
+    cat("\n Right side: \n current Q_sa:", QSA_val, 
+        "\n + alpha =", alpha, 
+        "\n PE = [ (R", reward, "+ gamma", gamma, 
+        "max a from Q(S',A')", max_sprime_value, "- Q(S,A)", QSA_val, "] =\n", 
+        (reward + gamma * max_sprime_value - QSA_val) 
+    )
+  }
+  
+  # Update Q(S, A) value in dataframe
+  Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"] <-
+    QSA_val + alpha * (reward + gamma * max_sprime_value - QSA_val)
+
+  if (!control_opts$quiet) {
+    cat("\n Left side Q(SA)")
+    print(unlist(
+      Q_SA_mat[Q_SA_mat$s == state & Q_SA_mat$a == action, "value"])
+    )
+  }
+  
+Q_SA_mat    
 }
 SelActOnPolicySARSA <- function(Q_SA_mat, state) {
   ### Select an on-policy action|state following p. 130 SARSA algo ###
@@ -320,67 +413,6 @@ action
 }
 ## END SARSA ##
 ######################################################################
-########################### INTIALIZATIONS ###########################
-## Set control options ##
-quiet <- 0 
-n_episodes <- 1e2
-## Set world options ##
-which_algo <- "SARSA"
-rows <- 7 # Set rows of gridworld 
-grid_world <- CreateWindyGridworld(rows)
-# Winds by column given in matrix indices the wind moves us
-winds <- c(0, 0, 0, rows, rows, rows, rows+1, rows+1, rows+1, 0)
-# Up down left and right in matrix indexing
-base_actions <- c(1, -1, rows, -rows)
-# Diagonal actions in matrix indexing
-diag_actions <- c(-rows+1, -rows-1, rows+1, rows-1)
-# Set action type:
-# "basic" = base actions only
-# "kings" = base + diagonal (king's rules) 
-# "kings_plus" = king's rules + same state
-action_type <- "kings_plus"
-start_state <- 4
-goal_state <- 53
-noisy_wind <- 1 # Make wind blows stochastic?
-# Reward for reaching goal / non-goal state
-non_goal_rewards <- -1 
-goal_reward <- 0
-# TO DO: implement softmax and other soft varieties
-soft_policy <- "eps_greedy"
-if (soft_policy == "eps_greedy") softness <- .1
-######################################################################
-###################### PACKAGE INITS INTO LISTS ######################
-# Package up pars to run algos
-if (which_algo=="SARSA") {
-  pars <- list(
-    "softness"=softness, # for soft action selection
-    "alpha"=.5, # learning rate
-    "gamma"=1, # discount 
-    "zero_init_values"=1, # how to inialize q values
-    "on_or_off"="on", # TO DO: edit, others not yet implemented
-    "soft_policy"=soft_policy
-  )
-  algo_list <- list("alg"="SARSA", "pars"=pars)
-}
-# Package up world items
-world_list <- list(
-  "grid_world"=grid_world,
-  "winds"=winds,
-  "base_actions"=base_actions,
-  "diag_actions"=diag_actions,
-  "action_type"=action_type,
-  "start_state"=start_state,
-  "goal_state"=goal_state,
-  "ng_rews"=non_goal_rewards,
-  "g_rew"=goal_reward,
-  "noisy_wind"=noisy_wind
-)
-# Package up control and debug options
-control_opts <- list("quiet"=quiet, 
-                     "n_episodes"=n_episodes,
-                     "ts"=1)
-
-SolveWindyGridWorld(world_list, algo_list, control_opts)
 
 # Create a visitation graph to print every 1k iters 
 # cols <- 10

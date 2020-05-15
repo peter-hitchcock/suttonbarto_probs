@@ -1,3 +1,8 @@
+5.7
+WindyCliffWorld
+- currently only saving the outputs from the final episode, then resetting; we want all of these and named so that we can refer to them
+
+
 4.10
 race track prob: 
 - currently debugging & editing way through fxs to generate an episode
