@@ -32,10 +32,11 @@ epsilon = 0;
 obserror = true;
 
 % setting for importance sampling
-importance_sampling = false;
+importance_sampling = true;
 
-% setting for importance sampling algorithm to use
-weight_per_decision = false;
+% setting for control variates - I haven't figured out how to do this yet
+% though
+control_variates = false;
 
 %  ####
 
@@ -44,8 +45,10 @@ steps_taken = 0;
 
 % learning algorithm with n-step bootstrapping
 for e = 1:numeps
-%     initialize in a random state
-    state = randi(length(states)-1);
+%     initialize in a random state - but not the terminal state
+    while state == tstate
+        state = randi(length(states));
+    end
 %     initialize time steps
     t = 0;
     R = -1;
@@ -113,12 +116,8 @@ for e = 1:numeps
 %       rewards
             for i = tau+1:min(tau+n,T)
                 %         importance sampling ratio
-                if importance_sampling == true && i <= T-1
-                    if weight_per_decision == false
-                        rho(i) = prod(action_prob_policy./0.5);
-                    else
-                        rho(i) = action_prob_policy(i)./0.5;
-                    end
+                if importance_sampling == true 
+                    rho(i) = prod(action_prob_policy(i:(min(tau+n,T)-1))./0.5);
                 else
                     rho(i) = 1;
                 end
