@@ -5,7 +5,7 @@ clear all
 states = 1:50;
 
 % terminal state
-termstate = 50;
+termstate = 25;
 
 % step size parameter
 alpha = 0.01;
@@ -17,7 +17,7 @@ gamma = 0.9;
 n = 5;
 
 % number of episodes
-numeps = 1000;
+numeps = 5000;
 
 % my policy is to walk to the terminal state and get a reward. I always
 % choose an action that takes me to a higher value state, but sometimes
@@ -40,8 +40,8 @@ steps = zeros(numeps,1);
 
 % initialize state values if not provided
 V = zeros(length(states),1);
-    
-% run an outer loop to get new state values for each episode and then try 
+
+% run an outer loop to get new state values for each episode and then try
 % walking through the maze with a pre-determined state and without decision
 % noise to see how many steps it takes to get to the terminal state
 for eps = 1:numeps
@@ -62,83 +62,90 @@ steps_taken = 0;
 
 for e = 1:numeps
     if isempty(state_t)
-%       initialize in a random state if not provided
+        %       initialize in a random state if not provided
         state_t = randi(length(states));
         while state_t == termstate
             state_t = randi(length(states));
         end
     end
     
-%     initialize time steps
+    %     initialize time steps
     t = 0;
     R = -1;
     S = state_t;
     action_prob_policy = 0;
-    rho=0;
-    % big T 
+    rho=1;
+    % big T
     T = inf;
     % initialize tau
     tau = NaN;
-%     time step loop - go until we hit the terminal state
-    while tau ~= T-1 && state_t ~= termstate
+    
+    %     make a fixed state-value matrix that only changes every episode
+    Vf = V;
+    
+    %     time step loop - go until we hit the terminal state
+    while tau ~= T-1
         %         increment time step
         t = t + 1;
         G = 0;
-%       here are the states we would go if we go left or right
-        if state_t == 1
-            leftstate = 1;
-        else
-            leftstate = state_t-1;
-        end
-        if state_t == length(states)
-            rightstate = length(states);
-        else
-            rightstate = state_t+1;
-        end
-%       roll the dice to decide if we are going to be greedy or explore
-%         choose an action depending on whether right or left state is
-%         better
-    if rand > epsilon
-        if V(rightstate) > V(leftstate)
-            state_t = rightstate;
-            action_prob_policy(t) = 1;
-        elseif V(rightstate) < V(leftstate)
-            state_t = leftstate;
-            action_prob_policy(t) = 1;
-        elseif V(rightstate) == V(leftstate)
-            action_prob_policy(t) = 0.5;
-            if rand < 0.5
-                state_t = rightstate;  
+        if t < T
+            %       here are the states we would go if we go left or right
+            if state_t == 1
+                leftstate = 1;
             else
-                state_t = leftstate;
+                leftstate = state_t-1;
             end
+            if state_t == length(states)
+                rightstate = length(states);
+            else
+                rightstate = state_t+1;
+            end
+            %       roll the dice to decide if we are going to be greedy or explore
+            %         choose an action depending on whether right or left state is
+            %         better
+            if rand > epsilon
+                if V(rightstate) > V(leftstate)
+                    state_t = rightstate;
+                    action_prob_policy(t) = 1;
+                elseif V(rightstate) < V(leftstate)
+                    state_t = leftstate;
+                    action_prob_policy(t) = 1;
+                elseif V(rightstate) == V(leftstate)
+                    action_prob_policy(t) = 0.5;
+                    if rand < 0.5
+                        state_t = rightstate;
+                    else
+                        state_t = leftstate;
+                    end
+                end
+            else
+                %         for epsilon actions, choose a random action
+                if rand < 0.5
+                    state_t = rightstate;
+                else
+                    state_t = leftstate;
+                end
+                action_prob_policy(t) = 0.5;
+            end
+            %         check if we're at the terminal state, if not, rew = -1;
+            if state_t == termstate
+                R(t+1) = 0;
+                T = t+1;
+            else
+                R(t+1) = -1;
+            end
+            %         save the state we moved into
+            S(t+1) = state_t;
         end
-    else
-%         for epsilon actions, choose a random action
-        if rand < 0.5
-            state_t = rightstate;
-        else
-            state_t = leftstate;
-        end
-    end
-%         check if we're at the terminal state, if not, rew = -1;
-        if state_t == termstate
-            R(t+1) = 0;
-            T = t+1;
-        else
-            R(t+1) = -1;
-        end
-%         save the state we moved into
-        S(t+1) = state_t;
-%         update tau to see if we've had enough time steps to update
-        tau = t - n + 1; 
-%         update values if we have passed enough time steps
+        %         update tau to see if we've had enough time steps to update
+        tau = t - n + 1;
+        %         update values if we have passed enough time steps
         if tau >= 1
-%       mini loop to compute expected gains based on experienced
-%       rewards
+            %       mini loop to compute expected gains based on experienced
+            %       rewards
             for i = tau+1:min(tau+n,T)
                 %         importance sampling ratio
-                if importance_sampling == true && i <= T-1 && i <= tau
+                if importance_sampling == true && i <= T-1 && i <= tau+n-1
                     if weight_per_decision == false
                         rho(i) = prod(action_prob_policy./0.5);
                     else
@@ -147,21 +154,24 @@ for e = 1:numeps
                 else
                     rho(i) = 1;
                 end
+                %                 add discounted rewards to G
+                G = G + (gamma^(i-tau-1))*R(i);
+            end
+            %             add discounted future expectation to G
+            if tau + n < T
+                %                 use changing value expectations
                 if obserror == true
-                    G = G + (gamma^(i-tau-1))*R(i);
+                    G = G + (gamma^n)*V(S(tau+n));
                 else
-                    G = G + (gamma^(i-tau-1))*(R(i)-V(S(i)));
+                    %                     use fixed value expectations (sum of TD errors)
+                    G = G + (gamma^n)*Vf(S(tau+n));
                 end
             end
-            if tau + n < T
-                G = G + (gamma^n)*V(S(tau+n));
-            end
-%             update V(S-tau) based on past values
-           V(S(tau)) = V(S(tau)) + rho(tau)*alpha * (G - V(S(tau)));
-        end     
+            %             update V(S-tau) based on past values
+            V(S(tau)) = V(S(tau)) + rho(tau)*alpha * (G - V(S(tau)));
+        end
     end
-%     save number of time steps per episode
+    %     save number of time steps per episode
     steps_taken(e) = t;
 end
 end
-    
