@@ -12,8 +12,8 @@ knitr::opts_chunk$set(fig.width=14, fig.height=10)
 ```{r other setup }
 sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
 sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
-#sf()
-#DefPlotPars()
+sf()
+DefPlotPars()
 ```
 
 # Book notes 
@@ -21,8 +21,87 @@ Neither MC nor TD are best for all situations; this chapter casts them as opposi
 
 The downside of one-step TD methods are they yoke how often you can change the action to the time interval over which bootstrapping takes place; n-step frees you from this. This is bad because it's often most beneficial to bootstrap once some time has passed so that there's been a change worth using, whereas you want to change the action very fast. Thus n-step methods are simply the intermediate options between otoh waiting all the way until the end of an episode to use the rewards gained in your updates (MC) and bootstrapping soley based on the reward + value of next state; 2-step would update based on the next 2 rewards and discounted V(s') and V(s'') and so on.  
 
+## n- step SARSA  
+So far we've discussed n-step for prediction. To extend to control can combine with SARSA and denote the prior chapter's version SARSA(0) and the extensions n-step SARSA. To switch to control, we swap states for actions (or state-action pairs). The backup diagrams are strings of alternating states and actions but ending with action rather than state. 
+
+n-step returns are defined as
+
+$$ G_{t:t+n} = R_{t+1} + \gamma R_{t+2} ... \gamma Q(S_{t+n}, A_{t+n}),  $$
+with $G_{t:t_n} = G_t$ if $t+n \geq T $
+
+(note $T = t+1$ if $S_{t+1}$ is terminal)  
+
+and I think $G_t$ is just the reward discounted with 
 
 
+Intuition: For the first steps of episode, just act. Then can start updating and you update every time. At the end you have ~n steps left over and need to do the updates (this is where you're only entering the second conditional).  
 
 
+## Create a simple track testbed for n-step algorithms.   
+
+Rule: If you take an action that overshoots the track you just end up at that end of the track.  
+
+```{r}
+# All notes re: pseudocode start refer to that on p. 144 
+########################### INITIALIZATIONS ###########################
+## World params
+# Set locations of reward
+rew_locs <- rep(0, how_long)
+rew_locs[1] <- -3
+rew_locs[14] <- 3
+rew_locs[how_long] <- 12 # this is the terminal state
+how_long <- 20
+
+world_params <- list(
+  "how_long"=how_long,
+  "vec_world"=1:how_long,
+  "rew_locs"=rew_locs,
+  "terminal"=20, # for now set the terminal state to the end of the track
+  # Actions are movements in either direction  
+  "actions"=-4:4
+)
+
+# Dataframe to store policy ie probabilities
+policy <- data.frame(lapply(vec_world, function(x) data.frame("state"=x, 
+                                                               "action"=actions)) %>% bind_rows(),
+                     "prob"=rep(1/8, length(actions)*how_long))
+# Create a state_val_mat
+state_vals <- data.frame("state"=vec_world, "value"=runif(length(vec_world), 0, 5))
+
+agent_params <- list(
+  "gamma"=.8,
+  "alpha"=.3,
+  "n_episodes"=2,
+  "n"=3,
+  "policy"=policy,
+  "state_vals"=state_vals
+)
+
+## Control params
+control_params <- list(
+  "quiet"=0,
+  "visualize"=0
+)
+
+######################################################################
+```
+
+
+```{r}
+RunTDNStep(world_params,
+          agent_params,
+          controL_params) 
+```
+
+## Junk
+
+```{r}
+# Don't think need these
+# For setting up for loop. I think this should start same as big_T? Starting lower than it to not generate
+  # generating errors due to unaccepable vec length
+  #little_t <- 1e5 
+#for (t in 0:little_t) { # Start time step loop in pseudocode
+######################################################################
+
+```
 
