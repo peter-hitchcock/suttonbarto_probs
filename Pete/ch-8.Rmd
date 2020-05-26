@@ -1,0 +1,56 @@
+---
+title: "Chapter 8 - Planning and learning with tabular methods"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=14, fig.height=10)
+```
+
+
+```{r other setup }
+sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
+sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
+sf()
+DefPlotPars()
+```
+
+# Chapter notes  
+
+Chapter develops a unified view of MF (eg. MC, TD) and MB methods (eg. dyn programming, heuristic search). Many diffs but core commonalities: 1. estimate a value fx 2. look ahead to future, compute a backed-up value, then using as a target for the value fx.  
+
+# 8.1  
+A **model** is just anything that can be used to predict how the environ will respond to one's actions. A model is given a state and action and predicts a subsequent state and reward. Some models enumerate all possible future outcomes, these are *distributional models*; others just estimate a subset sampled according to probabilities, these are *sample models*.  
+
+Distribution models are more powerful, because once you have one you can always produce samples. But sample models are easier; eg. for a model of dice rolling, could just simulate dice rolling a bunch of times and return the sum, whereas it'd be harder to build a model of the $p(s'|r)$'s.  
+
+Planning in RL is taking a model as input and uses it to improve the policy for acting on the modeled environment.  
+
+Model -> simulated experience -> backups -> values (a key intermediate to improving policy) -> policy  
+
+The above structure is exactly shared by the learning methods only with real standing in for simulated experience. For instance, you could have a 1-step sampling-based Q-learning that converges to the optimal policy under the same conditions as learning-based q-learning. 
+ 
+ 1. select a state $S$ and action $A$ at random  
+ 2. send these to a *model* of the enviornment to obtain an $R$ and $S'$  
+ 3. update via  
+ 
+ $$Q(S,A) = Q(S,A) - \alpha (r + \gamma  max_a Q(S',a)-Q(S,A))$$  
+Another theme of this chapter is planning in small incremental steps. 
+
+# 8.2 Dyna  
+
+For a planning agent, real experience can both help improve the model (model learning) and improve te value function and policy (direct RL). 
+ 
+Dyna-Q uses both the 1-step planning (steps 1:3 above) and the RL method is one-step tabular Q-learning. 
+
+
+
+
+
+
+
+
+
+
+

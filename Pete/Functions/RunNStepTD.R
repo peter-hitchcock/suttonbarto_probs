@@ -14,9 +14,26 @@ RunTDNStep <- function(world_params,
     action  
   }
   ######################################################################
+  ########################### INITIALIZATIONS ###########################
+  # World #
+  rew_locs <- world_params[["rew_locs"]]
+  vec_world <- world_params[["vec_world"]]
+  how_long <- world_params[["how_long"]]
+  terminal <- world_params[["terminal"]]
+  # Agent #
+  gamma <- agent_params[["gamma"]]
+  alpha <- agent_params[["alpha"]]
+  n_episdoes <- agent_params[["n_episodes"]]
+  n <- agent_params[["n"]]
+  policy <- agent_params[["policy"]]
+  state_vals <- agent_params[["state_vals"]]
+  # Control #
+  quiet <- control_params[["quiet"]]
+  visualize <- agent_params[["visualize"]]
+  ######################################################################
   # Notes: Following pseudocode, we now have gamma, alpha, policy, and arbitrarily initialized V(s) for all s in S  ###
   for (ep in 1:n_episodes) {
-    
+    browser()
     if (!quiet) { cat("\n *********** NEW EPISODE ********* "); pause(2) }
     
     # Start randomly anywhere but the terminal state (first line in pseudocode after episode start)
@@ -54,7 +71,7 @@ RunTDNStep <- function(world_params,
         if(!quiet) cat("\n Storing next reward", reward_t, "and state", state_t, 
                        "\n in their vectors")
         
-        # Change big T if this if we hit the terminal state
+        # Change big T if we hit the terminal state
         if (next_state == terminal) {
           big_T <- t+1
           if(!quiet) cat("\n This is the terminal state \n T assigned", t+1)
@@ -92,7 +109,7 @@ RunTDNStep <- function(world_params,
         
         # Update the state value at this time step as the discrepancy between its previous value and G
         state_vals[tau] <- state_vals[tau, "value"] + alpha * (G - state_vals[tau]) 
-        cat("\n The V(S_tau) update is") print(state_vals[tau, "value"]); cat("+"); print(alpha * (G - state_vals[tau]))
+        cat("\n The V(S_tau) update is"); print(state_vals[tau, "value"]); cat("+"); print(alpha * (G - state_vals[tau]))
       } # End if tau >0 conditional
       if(!quiet) cat("\n ** Outside second conditional **", )
       
@@ -107,5 +124,50 @@ RunTDNStep <- function(world_params,
                     "n T is", big_T)
     
   } # END episode loop
-  
 }
+
+# All notes re: pseudocode start refer to that on p. 144 
+########################### INITIALIZATIONS ###########################
+## World params
+# Set locations of reward
+rew_locs <- rep(0, how_long)
+rew_locs[1] <- -3
+rew_locs[14] <- 3
+rew_locs[how_long] <- 12 # this is the terminal state
+how_long <- 20
+
+world_params <- list(
+  "how_long"=how_long,
+  "vec_world"=1:how_long,
+  "rew_locs"=rew_locs,
+  "terminal"=20, # for now set the terminal state to the end of the track
+  # Actions are movements in either direction  
+  "actions"=-4:4
+)
+
+# Dataframe to store policy ie probabilities
+policy <- data.frame(lapply(vec_world, function(x) data.frame("state"=x, 
+                                                              "action"=actions)) %>% bind_rows(),
+                     "prob"=rep(1/8, length(actions)*how_long))
+# Create a state_val_mat
+state_vals <- data.frame("state"=vec_world, "value"=runif(length(vec_world), 0, 5))
+
+agent_params <- list(
+  "gamma"=.8,
+  "alpha"=.3,
+  "n_episodes"=2,
+  "n"=3,
+  "policy"=policy,
+  "state_vals"=state_vals
+)
+
+## Control params
+control_params <- list(
+  "quiet"=0,
+  "visualize"=0
+)
+######################################################################
+
+RunTDNStep(world_params,
+                       agent_params,
+                       controL_params)
