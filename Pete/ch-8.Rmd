@@ -42,7 +42,11 @@ Another theme of this chapter is planning in small incremental steps.
 
 For a planning agent, real experience can both help improve the model (model learning) and improve te value function and policy (direct RL). 
  
-Dyna-Q uses both the 1-step planning (steps 1:3 above) and the RL method is one-step tabular Q-learning. 
+Dyna-Q uses both the 1-step planning (steps 1:3 above) and the RL method is one-step tabular Q-learning.   
+
+# Group discussion  
+What's the intuition for why it helps to update your value function?
+Matt: Imagine you get to an ice cream shop and are pleasanty surprised. With 1-step, you'd still have no reason to get to the house. 
 
 
 
