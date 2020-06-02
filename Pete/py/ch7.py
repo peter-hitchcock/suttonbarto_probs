@@ -27,7 +27,7 @@ def select_action_egreedily(Q_SA, eps=.1):
     if random.random() > eps:
         action = Q_SA.loc[Q_SA.index[np.argmin(Q_SA["values"])-1], "action"]
     else:
-        # Randomly pick one of the remaining actions..
+        # Randomly pick one of the actions..
         n_actions = Q_SA.shape[1]+1
         # .. by generating a uniformly spaced sequence from 0:1 and taking the first action greater
         # than a random number from 0 to 1
@@ -37,7 +37,6 @@ def select_action_egreedily(Q_SA, eps=.1):
 
 grids_actions = create_grid_world_and_actions()
 
-# Update Q_SA based on this actual experience 
 def update_QSA(*env_agent):
     '''Update state values matrix based on real or simulated experience'''
     # Find Q_SA before update
