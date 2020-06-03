@@ -22,7 +22,7 @@ def create_grid_world_and_actions(rows=6, cols=9):
 
 def select_action_egreedily(Q_SA, eps=.1):
     '''
-    Select actions e-greedily considering SA values in Q_SA (the subset of Q_sa for this state)
+    Select actions e-greedily considering values in Q_SA (the subset of Q_sa for this state)
     '''
     if random.random() > eps:
         action = Q_SA.loc[Q_SA.index[np.argmin(Q_SA["values"])-1], "action"]
@@ -45,8 +45,8 @@ def update_QSA(*env_agent):
     # and max_a Q(S', a)
     sp_values = Q_vals.loc[Q_vals.state == s_prime, "values"]
 
-    max_Q_Sp_a = \
-        sp_values.iloc[np.argmax(Q_vals.loc[Q_vals.state == s_prime, "values"])]
+    max_Q_Sp_a \
+        = sp_values.iloc[np.argmax(Q_vals.loc[Q_vals.state == s_prime, "values"])]
     
     # Update the s,a in the Q_vals df
     Q_vals.loc[(Q_vals.state == state) & (Q_vals.action == action), "values"] \
@@ -118,7 +118,7 @@ terminal = 0
 # Line 3 pseudocode: set state
 state = world["start_state"]
 
-while i < control["loop_until"] and is not terminal:
+while i < control["loop_until"] and not terminal:
 
     # Take action by extracting values for this state..
     Q_SA = Q_vals[Q_vals.state == state] 
