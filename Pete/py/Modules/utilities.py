@@ -27,7 +27,21 @@ def sel_act_egreedy(Q_SA, eps=.1):
     if random.random() > eps:
         action = Q_SA.loc[Q_SA.index[np.argmax(Q_SA["values"])], "action"]
     else:
-        Q_SA.loc[Q_SA.index[random.randint(1, 3)], "action"]
+        action = Q_SA.loc[Q_SA.index[random.randint(1, 3)], "action"]
     return action
+
+def get_sprime_r(state, action, vst, reward_locations, goal_state):
+    '''
+    Returns new state and whether it's terminal and the reward achieved in the transition
+    '''
+    put_new_state = state + action
+    # Check if this is a valid state transition and accordingly transition 
+    # to new state or same state..
+    s_prime = put_new_state if put_new_state in vst else state
+    reward = 1 if s_prime in reward_locations else 0
+    # .. and check if the new state is terminal 
+    terminal = 0 if s_prime == goal_state else 1
+    
+    return {"s_prime": s_prime, "terminal": terminal, "reward": reward}
 
         

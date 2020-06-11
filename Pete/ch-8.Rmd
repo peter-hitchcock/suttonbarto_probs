@@ -48,6 +48,15 @@ Dyna-Q uses both the 1-step planning (steps 1:3 above) and the RL method is one-
 What's the intuition for why it helps to update your value function?
 Matt: Imagine you get to an ice cream shop and are pleasanty surprised. With 1-step, you'd still have no reason to get to the house. 
 
+## 8.7 The two forms of planning  
+1. The DP and Dyna $Q_{SA}$ examples are of the first kind of planning, which is using a model to improve a tabular (or function-appoximated) value representation. This then guides future action selection. Hence, action selection and planning happen at separate times.  
+2. Alternately one can plan when one hits a state. In the simplest case where one just had state values, you'd hit state $S_{t}$ and select an action based on model-based anticipation of $S_{t+1}$, but more generally you can plan multi-step trajectories (and presumably skip states etc.)  
+
+
+
+
+
+
 
 
 

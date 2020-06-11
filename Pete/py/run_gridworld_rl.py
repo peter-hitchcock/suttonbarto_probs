@@ -5,7 +5,9 @@ from importlib import reload as ir
 import numpy as np
 import pandas as pd 
 import Modules.utilities as utils
-import Modules.dyna as Dyna
+from Modules.utilities import sel_act_egreedy, get_sprime_r
+import Modules.dyna as dyna
+from Modules.dyna import Dyna
 ######################### INITIALIZATIONS #################################
 # Initialize world, agent, and control parameters 
 world = {
@@ -17,9 +19,9 @@ world = {
     "rew_locs": [49], 
 }
 agent = {
-    "gamma": .95, # discount
-    "alpha": .1,  # learning rate
-    "epsilon": .1, # randomness in e-greedy 
+    "GAMMA": .95, # discount
+    "ALPHA": .1,  # learning rate
+    "EPSILON": .1, # randomness in e-greedy 
     # Right, left, down, up
     "actions": utils.gen_grid_acts()["actions"],
     # How many times to simulate after one real-world transition 
@@ -64,33 +66,27 @@ while i < control["loop_until"] and not terminal:
 
     # Take action by extracting values for this state..
     Q_SA = Q_vals[Q_vals.state == state] 
-    # .. and selecting e-greedily 
-    action = utils.sel_act_egreedy(Q_SA, agent["epsilon"])
+    # .. (line 4 pseudocode) and selecting e-greedily 
+    action = sel_act_egreedy(Q_SA, agent["EPSILON"])
 
-    # Observe reward and state transition  
-    put_new_state = state + action
-    # Check if this is a valid state transition and accordingly transition 
-    # to new state or same state..
-    s_prime = put_new_state if put_new_state in vst else state
-    reward = 1 if state in reward_locations else 0
-    # .. and check if the new state is terminal 
-    if s_prime == world["goal_state"]: 
-        terminal = 1
+    # (line 5 pseudocode) Transition state to s_prime and finds reward given 
+    # above action, also find if state is terminal..
+    state_trans_out = \
+        get_sprime_r(state, action, vst, reward_locations, world["goal_state"])
+    # .. unpacking the outputs 
+    s_prime, terminal, reward = {**state_trans_out}.values()
 
     # Pseuduocode (d): Update q-value based on real experience  
-    Q_vals = Dyna.update_QSA(Q_vals, state, action, s_prime, reward, alpha, gamma)
-    
-    # Pseudocode (e): Update model 
+    Q_vals = dyna.update_QSA(Q_vals, state, action, s_prime, reward, \
+         agent["ALPHA"], agent["GAMMA"])
 
-    # Pseudocode (f): Sample n steps s
-    def name():
-        '''
+    # Pseudocode (e): Update model 
+    model.loc[(model.state==state) & (model.action==action), ["reward", "s_prime"]] = \
+        [state_trans_out.get(key) for key in ["s_prime", "reward"]]
     
-        '''
+    update_from_model(Q_SA, state, action, model_SA, control["sim_steps"])
     
-        body
-    
-        return
+
     
 
 
