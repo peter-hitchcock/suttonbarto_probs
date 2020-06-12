@@ -27,7 +27,7 @@ agent = {
     # How many times to simulate after one real-world transition 
     "sim_steps": 10,
 }
-control = {
+ctl = {
     # Take this many steps of experience  
     "loop_until": 1e6,
 }
@@ -52,7 +52,7 @@ model["s_prime"] = 0
 model["reward"] = 0
 
 # Define set of valid state transitions.. 
-vst = set(world["flat_grid"]).difference(set(world["occlusions"]))
+vst = set(world["flat_grid"]) - (set(world["occlusions"]))
 # .. and states with reward
 reward_locations = set(world["rew_locs"])
 ###########################################################################
@@ -61,20 +61,26 @@ i = 1
 terminal = 0
 # Line 3 pseudocode: set state
 state = world["start_state"]
+# Lists to keep track of visited states and actions so can sample from these in
+# model 
+state_recorder = []
+action_recorder = []
 
-while i < control["loop_until"] and not terminal:
+while i < ctl["loop_until"] and not terminal:
 
     # Take action by extracting values for this state..
     Q_SA = Q_vals[Q_vals.state == state] 
     # .. (line 4 pseudocode) and selecting e-greedily 
     action = sel_act_egreedy(Q_SA, agent["EPSILON"])
 
+    # Update visitation record 
+    state_recorder.append(state)
+    action_recorder.append(action)
+
     # (line 5 pseudocode) Transition state to s_prime and finds reward given 
-    # above action, also find if state is terminal..
+    # above action, also find if state is terminal
     state_trans_out = \
         get_sprime_r(state, action, vst, reward_locations, world["goal_state"])
-    # .. unpacking the outputs 
-    s_prime, terminal, reward = {**state_trans_out}.values()
 
     # Pseuduocode (d): Update q-value based on real experience  
     Q_vals = dyna.update_QSA(Q_vals, state, action, s_prime, reward, \
@@ -84,16 +90,21 @@ while i < control["loop_until"] and not terminal:
     model.loc[(model.state==state) & (model.action==action), ["reward", "s_prime"]] = \
         [state_trans_out.get(key) for key in ["s_prime", "reward"]]
     
-    update_from_model(Q_SA, state, action, model_SA, control["sim_steps"])
+    # Pseudocode (f): Sample s, a to generate s', r and update associate Q(S,A) n times
+    for step in range(agent["sim_steps"]):
+        # Randomly pick from previously experienced states and actions  
+        state = random.choice(state_recorder)
+        action = random.choice(action_recorder)
+        # Find the associated reward and s prime 
+        reward = model.loc[(model.state==state) & (model.action==action), "reward"]
+        s_prime = model.loc[(model.state==state) & (model.action==action), "s_prime"]
+
+        Q_vals = dyna.update_QSA(Q_vals, state, action, s_prime, reward, \
+         agent["ALPHA"], agent["GAMMA"])
     
-
-    
-
-
-    i += 1
-
-
-
+    # Set whether wer'e at terminal state 
+    terminal = state_trans_out["terminal"]
+    i += 1 
 ###########################################################################
 ## Refactoring plan:  
 # For now just create a dyna class. May eventually want to factor into parent 

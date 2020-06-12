@@ -21,17 +21,21 @@ def update_QSA(Q_vals, state, action, s_prime,
         = old_Q_SA + ALPHA * (reward + GAMMA * (max_Q_Sp_a - old_Q_SA))
 
     return Q_vals
-    
+
+    def update_from_model(model, Q_SA, state, action, sim_steps):
+        return update_QSA(Q_vals, state, action, s_prime, reward, ALPHA, GAMMA)
+
+
 class Dyna:
     
     def __init__(self, world, agent, control, Q_vals, model):
         self.world = dict(world)
         self.agent = dict(agent)
         self.control = dict(control)
-        self.Q_vals = Q_vals
-        self.model = model  
+        #self.Q_vals = Q_vals 
 
-    def update_from_model(self, model, Q_SA, state, action, sim_steps):
+
+
 
 
 
