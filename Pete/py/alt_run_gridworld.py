@@ -1,6 +1,7 @@
 ######################### TRYING TO USE CLASSES ###########################
 import random
 from importlib import reload as ir
+import numpy as np
 
 import Modules.utilities as utils
 from Modules.rl import RL
@@ -19,7 +20,7 @@ agent_pars = {
     "ALPHA": .1,  # learning rate
     "EPSILON": .1, # randomness in e-greedy 
     # Right, left, down, up
-    "ACTIONS": utils.gen_grid_acts()["actions"],
+    "ACTIONS": utils.gen_grid_acts()["ACTIONS"],
     # How many times to simulate after one real-world transition 
     "sim_steps": 10,
 }
@@ -29,9 +30,9 @@ ctl = {
 }
 state = world["START_STATE"]
 ######################### DEFINE AGENT ####################################
-RL(world, agent_pars, state)
-#agent = RL(world, agent_pars, state)
-agent.sel_act_egreedy(state)
+# Create instance of RL agent 
+agent = RL(world, agent_pars, state)
+
 # ###########################################################################
 # Line 2 pseudocode: Start loop 
 i = 1

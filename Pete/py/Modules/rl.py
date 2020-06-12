@@ -1,4 +1,5 @@
 import random
+from . import utilities as utils
 
 import pandas as pd
 import numpy as np
@@ -8,29 +9,10 @@ class RL:
             self.world = dict(world)
             self.agent_pars_pars = dict(agent_pars)
             self.state = state
-
+            GRID_ACTION_SIZE = utils.gen_grid_acts()["GRID_ACTION_SIZE"]
             # Line 1, tabular dyna-q pseudocode p. 164: Initialize Q(s,a) and Model(s,a)
-            # First create a base dataframe of state, action pairs  
-            __sa_df = pd.DataFrame(
-                {
-                "state": np.repeat([world["flat_grid"]], len(agent_pars["ACTIONS"])),
-                "action": agent_pars["ACTIONS"] * len(world["flat_grid"]),
-                }
-            )
-            # Randomly initialize Q_values 
-            Q_vals = pd.DataFrame.copy(__sa_df)
-            Q_vals["values"] = np.random.random(len(Q_vals))
-            self.Q_vals = Q_vals 
-
-            # Define a model comprising the state action pairs.. 
-            # ** eventually will move to Dyna subclass
-            model = pd.DataFrame.copy(__sa_df)
-            # .. state transitions in this deterministic grid world.. 
-            # Start with an ignorant model that will then be built from experience 
-            model["s_prime"] = 0
-            model["reward"] = 0
-            self.model = model
-
+            self.Q_vals = np.random.random(GRID_ACTION_SIZE)
+            self.model_sprime = np.zeros(GRID_ACTION_SIZE), np.zeros(GRID_ACTION_SIZE)
             # Define set of valid state transitions.. 
             self.vst = set(world["flat_grid"]) - (set(world["OCCLUSIONS"]))
             # .. and states with reward

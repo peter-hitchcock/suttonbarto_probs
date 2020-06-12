@@ -4,21 +4,27 @@ import collections
 import numpy as np
 import pandas as pd 
 
-def gen_grid_acts(rows=6, cols=9):
+def gen_grid_acts(HEIGHT=6, WIDTH=9):
         ''' 
-        Define flat and matrix representations of grid world and actions
-        available in that world
+        Returns a dict with diff representations of grid, the actions available 
+        in it, and size of both 
         '''
         # Flat grid representation 
-        flat_grid = np.arange(rows*cols)+1
-        grids_actions = {
+        flat_grid = np.arange(HEIGHT*WIDTH)+1
+        # Right, left, up, down
+        ACTIONS = [HEIGHT, -HEIGHT, 1, -1]
+        # For setting up q and model arrays
+        GRID_ACTION_SIZE = (len(ACTIONS), HEIGHT, WIDTH)
+
+        grid_setup = {
             "flat_grid": flat_grid,
             # Representation where illegal actions move off grid
-            "grid": np.transpose(flat_grid.reshape(cols, rows)),
-            # Right, left, up, down
-            "actions": [rows, -rows, 1, -1],
+            "grid": np.transpose(flat_grid.reshape(HEIGHT, WIDTH)),
+            "ACTIONS": ACTIONS,
+            "GRID_ACTION_SIZE": GRID_ACTION_SIZE
         }
-        return grids_actions
+
+        return grid_setup
 
 def sel_act_egreedy(Q_SA, eps=.1):
     '''
