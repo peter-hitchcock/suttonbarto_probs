@@ -81,11 +81,13 @@ while i < ctl["loop_until"] and not terminal:
     # above action, also find if state is terminal
     state_trans_out = \
         get_sprime_r(state, action, vst, reward_locations, world["goal_state"])
+    # Unpack the outputs  
+    s_prime, terminal, reward = {**state_trans_out}.values() 
 
-    # Pseuduocode (d): Update q-value based on real experience  
+    # Pseuduocode (d): Update q-value based on real experience 
     Q_vals = dyna.update_QSA(Q_vals, state, action, s_prime, reward, \
          agent["ALPHA"], agent["GAMMA"])
-
+            
     # Pseudocode (e): Update model 
     model.loc[(model.state==state) & (model.action==action), ["reward", "s_prime"]] = \
         [state_trans_out.get(key) for key in ["s_prime", "reward"]]
@@ -93,18 +95,18 @@ while i < ctl["loop_until"] and not terminal:
     # Pseudocode (f): Sample s, a to generate s', r and update associate Q(S,A) n times
     for step in range(agent["sim_steps"]):
         # Randomly pick from previously experienced states and actions  
-        state = random.choice(state_recorder)
-        action = random.choice(action_recorder)
+        state_m = random.choice(state_recorder)
+        action_m = random.choice(action_recorder)
         # Find the associated reward and s prime 
-        reward = model.loc[(model.state==state) & (model.action==action), "reward"]
-        s_prime = model.loc[(model.state==state) & (model.action==action), "s_prime"]
+        reward_m = model.loc[(model.state==state) & (model.action==action), "reward"]
+        s_prime_m = model.loc[(model.state==state) & (model.action==action), "s_prime"]
 
-        Q_vals = dyna.update_QSA(Q_vals, state, action, s_prime, reward, \
+        Q_vals = dyna.update_QSA(Q_vals, state_m, action_m, s_prime_m, reward_m, \
          agent["ALPHA"], agent["GAMMA"])
     
-    # Set whether wer'e at terminal state 
-    terminal = state_trans_out["terminal"]
-    i += 1 
+    ## Get ready for next step 
+    state = s_prime
+    i += 1  
 ###########################################################################
 ## Refactoring plan:  
 # For now just create a dyna class. May eventually want to factor into parent 
