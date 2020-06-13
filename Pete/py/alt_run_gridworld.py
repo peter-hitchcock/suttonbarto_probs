@@ -3,8 +3,12 @@ import random
 from importlib import reload as ir
 import numpy as np
 
-import Modules.utilities as utils
+#import Modules.utilities as utils
 from Modules.rl import RL
+
+## Testing  
+from Modules import World
+#World.__init__
 ######################### INITIALIZATIONS #################################
 # Initialize world, agent, and control parameters 
 world = {
@@ -32,7 +36,8 @@ state = world["START_STATE"]
 ######################### DEFINE AGENT ####################################
 # Create instance of RL agent 
 agent = RL(world, agent_pars, state)
-
+tmp = agent.Q_vals
+tmp[3, ]
 # ###########################################################################
 # Line 2 pseudocode: Start loop 
 i = 1
