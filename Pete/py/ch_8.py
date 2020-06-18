@@ -15,6 +15,15 @@ class Grid:
         return '\n \n This is a {self.HEIGHT} by {self.WIDTH}' \
                 ' world. \n \n'.format(self=self)    
 
+    def display_world(self):
+        '''Make a nicely formatted display of the world'''
+        HEIGHT, WIDTH, OCCL_COLS, OCCL_ROWS = \
+            self.HEIGHT, self.WIDTH, self.OCCLUSION_ROWS, self.OCCLUSION_COLS
+        flat_repr = np.arange(Grid().HEIGHT*Grid().WIDTH, dtype=float)
+        viewable_grid = flat_repr.reshape(Grid().HEIGHT, Grid().WIDTH)
+        viewable_grid[OCCL_COLS, OCCL_ROWS] = np.nan
+        print(viewable_grid)            
+
 class RL_agent(Grid):
     '''Defines generic RL agent that will be inherited to create specific agents'''
     def __init__(self):
@@ -32,10 +41,20 @@ class RL_agent(Grid):
         self.ALPHA = .1 # learning rate 
     
     def sel_egreedy_action(self, q_sa):
-        # ** Need to figure out how to get state, action here        
-       # Use state, action to find the relevant values from q-value 
-       #return action
-       return q_sa
+        '''Returns the maximal action with EPSILON probability, else random action'''
+        # Find the indices where q_sa is max  
+        #** not sure this'll work with current action repr because keys aren't indexed 
+        max_inds = np.where(q_sa == np.max(q_sa))
+        if random.random() self.EPSILON:
+            
+            if (len(max_inds) == 1):
+                action = np.where(q_sa == np.max(q_sa))
+            else:
+
+
+        pass
+        #return action
+       
         
 class Dyna_agent(RL_agent):
     def __init__(self): 
@@ -46,27 +65,21 @@ class Dyna_agent(RL_agent):
 if __name__ == "__main__":
     print(str(Grid()))
 
-    # View world 
-    HEIGHT, WIDTH, OCCL_COLS, OCCL_ROWS = \
-        Grid().HEIGHT, Grid().WIDTH, Grid().OCCLUSION_ROWS, Grid().OCCLUSION_COLS
-    flat_repr = np.arange(Grid().HEIGHT*Grid().WIDTH, dtype=float)
-    view_grid_tmp = flat_repr.reshape(Grid().HEIGHT, Grid().WIDTH)
-    view_grid_tmp[OCCL_COLS, OCCL_ROWS] = np.nan
-    print(view_grid_tmp)
-
-    ## Try to run a single step..
     # Instantiate grid and RL agent
-        grid = Grid()
-        agent = RL_agent()
-        # Start moving 
-        starting_state = random.choice(grid.START_STATES)
-        ss_row, ss_col = starting_state[0], starting_state[1]
-        print(str("\n \n----Starting in row {} column {}-------- \n \n". \
-            format(ss_row, ss_col)))
-        # Find the q-values for the actions in this state 
-        q_sa = agent.q_values[:, ss_row, ss_col]
-        #print(q_sa)
-        RL_agent.sel_egreedy_action(agent, q_sa)
+    grid = Grid()
+    # View world 
+    grid.display_world()
+    ## Trying to run a single step..
+    agent = RL_agent()
+    # Start moving 
+    starting_state = random.choice(grid.START_STATES)
+    ss_row, ss_col = starting_state[0], starting_state[1]
+    print(str("\n \n ----Starting in row {} column {}-------- \n \n". \
+        format(ss_row, ss_col)))
+    # Find the q-values for the actions in this state 
+    q_sa = agent.q_values[:, ss_row, ss_col]
+    #print(q_sa)
+    RL_agent.sel_egreedy_action(agent, q_sa)
     
     
 
