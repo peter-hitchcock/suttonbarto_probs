@@ -62,7 +62,7 @@ for task = 1:num_tasks
     klast = 0;
     kfreq= 10;
     % set criteria for number of episodes to terminate on
-    numeps = 100;
+    numeps = 1000;
     % set number of simulations
     num_simulations=1;
     % set how many times we run simulations in the episode
@@ -91,7 +91,7 @@ for task = 1:num_tasks
                 
                 %            update the model
                 Model_states(curr_state,curr_action,next_state) = Model_states(curr_state,curr_action,next_state)+1;
-                Model_rewards(curr_state,curr_action,next_state) = Model_rewards(curr_state,curr_action,next_state) + R;
+                Model_rewards(curr_state,curr_action,next_state) =  R;
                 Model_obs(curr_state,curr_action) = Model_obs(curr_state,curr_action)+1;
                 
                 %            tabular update of Q
@@ -116,9 +116,8 @@ for task = 1:num_tasks
                 %        determine value of current policy
                 %                 if updates > klast+kfreq
                 k = k+1;
-                V(e,task) = value_policy(Model_states,Model_rewards,Model_obs,policy);
-                U(e,task) = updates;
-                klast = updates;
+                V(k,task) = value_policy(Model_states,Model_rewards,Model_obs,policy);
+                U(k,task) = updates;
                 %                 end
             end
         end
@@ -137,7 +136,7 @@ if strcmp(distribution,'uniform')
             if Model_obs(s,a) > 0
                 for n = 1:num_simulations
                     states_hat = squeeze(Model_states(s,a,:)./Model_obs(s,a));
-                    rewards_hat = squeeze(Model_rewards(s,a,:)./Model_obs(s,a));
+                    rewards_hat = squeeze(Model_rewards(s,a,:));
                     next_states = [];
                     %                     go to a state
                     while isempty(next_states)
@@ -162,7 +161,7 @@ elseif strcmp(distribution,'on-policy')
     curr_state = randi(size(Model_states,1));
     for n = 1:num_simulations
         states_hat = squeeze(Model_states(curr_state,policy(curr_state),:)./Model_obs(curr_state,policy(curr_state)));
-        rewards_hat = squeeze(Model_rewards(curr_state,policy(curr_state),:)./Model_obs(curr_state,policy(curr_state)));
+        rewards_hat = squeeze(Model_rewards(curr_state,policy(curr_state),:));
         next_states = [];
         %                     go to a state
         if sum(states_hat) == 0
@@ -198,20 +197,13 @@ values_future_states=0;
 %     get predictions about rewards at current state
 for i = 1:length(curr_states)
     states_hat = nansum(squeeze(Model_states(curr_states(i),policy(curr_states(i)),:)./sum(Model_obs(curr_states(i),policy(curr_states(i))))),2);
-    reward_hat = nansum(squeeze(Model_rewards(curr_states(i),policy(curr_states(i)),:)./sum(Model_obs(curr_states(i),policy(curr_states(i))))),2);
+    reward_hat = nansum(squeeze(Model_rewards(curr_states(i),policy(curr_states(i)),:)),2);
     value_curr = sum(states_hat.*reward_hat);
     for j = 1:size(states_hat,1)
         states_hat_future = nansum(squeeze(Model_states(j,policy(j),:)./Model_obs(j,policy(j))),2);
-        rewards_hat_future = nansum(squeeze(Model_rewards(j,policy(j),:)./Model_obs(j,policy(j))),2);
+        rewards_hat_future = nansum(squeeze(Model_rewards(j,policy(j),:)),2);
         values_future_states(j) = states_hat(j)*nansum(rewards_hat_future.*states_hat_future);
     end
 end
 V = V + value_curr + sum(values_future_states);
 end
-
-
-
-
-
-
-
