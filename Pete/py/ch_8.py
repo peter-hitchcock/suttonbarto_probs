@@ -42,35 +42,37 @@ class RL_agent(Grid):
                     _ACT_TUPE("right", np.array([1, 0])),
                 ]
         # Initialize empty array of q values. Note this is indexed by height,
-        # width, acitons so eg. [5, 5, :] will be the value of all actions for the state 
+        # width, acitons so eg. [:, 5, 5] will be the value of all actions for the state 
         # corresponding to the 5th row, 5th state
-        HEIGHT, WIDTH, ACTIONS = (Grid().HEIGHT, Grid().WIDTH, len(self.ACTIONS))
+        ACTIONS, HEIGHT, WIDTH = (len(self.ACTIONS), Grid().HEIGHT, Grid().WIDTH)
         # Define q-value matrix. 
-        self.q_values = np.zeros([HEIGHT, WIDTH, ACTIONS])
+        self.q_values = np.zeros([ACTIONS, HEIGHT, WIDTH])
         # Set parameters for RL stuff 
         self.EPSILON = .1 # action selection greediness
         self.ALPHA = .1 # learning rate 
+        self.GAMMA = .9 # discount factor 
     
     def sel_egreedy_action(self, q_sa, ACTIONS):
         '''Returns the maximal action with EPSILON probability else random action'''
         if random.random() > self.EPSILON:
             # Find indices where q_sa is max and randomly select between them returning
             # just one max in case of 2+ equal q_sa's. Note [0] is used to untupify result. 
-            max_ind = random.choice(np.where(q_sa == np.max(q_sa))[0])
-            action = ACTIONS[max_ind]
+            action_index = random.choice(np.where(q_sa == np.max(q_sa))[0])
         else:
-            action = random.choice(ACTIONS)
-        return action
+            action_index = random.randint(0, len(ACTIONS)-1)
+        action = ACTIONS[action_index]
+        return action, action_index
 
     def eval_state_transition(self, move, state, HEIGHT, WIDTH, OCCLUSION_COLS, OCCLUSION_ROWS):
         '''Return s_prime based on whether this is a valid state transition'''
         # Find the putative new state
+        # ** bug in here  
         pst = move + state
         # If the the new state doesn't exceed the boundaries of the grid..
-        # .. and isn't too an occluded state ..
+        # .. and isn't to an occluded state ..
         if 0 <= pst[0] <= HEIGHT and 0 <= pst[1] <= WIDTH and \
                 pst[0] not in OCCLUSION_ROWS or pst[1] not in OCCLUSION_COLS:
-                # .. the putative state is in fact the new state.. 
+                # .. the putative state is in fact the new state
                 s_prime = pst
         else: 
             s_prime = state            
@@ -104,31 +106,33 @@ if __name__ == "__main__":
     state = starting_state
 
     ## Trying to run a single step of iteration ..   
-    while not terminal:     
-        # Define current state in row, col indices        
-              
+    while not terminal:           
         # Find the q-values for the actions in this state 
-        q_sa = agent.q_values[starting_state[0], starting_state[1], :]
+        q_sa = agent.q_values[:, state[0], state[1]]
 
         # Select action  
-        action = RL_agent.sel_egreedy_action(agent, q_sa, ACTIONS)
+        action, action_index = RL_agent.sel_egreedy_action(agent, q_sa, ACTIONS)
         print("Action:", *action)
         
         # Find s_prime and reward  
         s_prime = RL_agent.eval_state_transition(
             agent, action.move, state, 
-            grid.HEIGHT, grid.WIDTH, 
-            grid.OCCLUSION_COLS, grid.OCCLUSION_ROWS
+            grid.HEIGHT, grid.WIDTH, grid.OCCLUSION_COLS, grid.OCCLUSION_ROWS
         )
-        
         reward = 1 if list(state) in REW_LOCS else 0
         print("S_prime:", s_prime, "\n Reward:", reward)
-    
-        # s_prime -> state and check if terminal
+
+        agent.q_values[state[0]-1, state[1]-1, action_index] += \
+            agent.ALPHA * (reward + agent.GAMMA) * \
+                (np.max(agent.q_values[action_index, s_prime[0]-1, s_prime[1]-1]) - \
+                    agent.q_values[action_index, state[0]-1, state[1]-1])
+        # assign state = s_prime and check if terminal
         state = s_prime
         if list(state) in grid.TERMINAL: 
             terminal = 1
             print("\n \n ---- Reached terminal state -------- \n \n")
+
+
 
 
 
