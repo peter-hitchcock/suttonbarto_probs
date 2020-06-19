@@ -34,7 +34,7 @@ num_tasks = 200;
 for task = 1:num_tasks
     
     % initialize number of starting states
-    num_states = 1000;
+    num_states = 100;
     % loop down layers of the tree
     %     loop through states in each layer
     for k = 1:num_states
@@ -135,7 +135,7 @@ if strcmp(distribution,'uniform')
         for a = 1:size(Model_states,2)
             if Model_obs(s,a) > 0
                 for n = 1:num_simulations
-                    states_hat = squeeze(Model_states(s,a,:)./Model_obs(s,a));
+                    states_hat = squeeze(Model_states(s,a,:))./Model_obs(s,a);
                     rewards_hat = squeeze(Model_rewards(s,a,:));
                     next_states = [];
                     %                     go to a state
@@ -160,7 +160,7 @@ elseif strcmp(distribution,'on-policy')
     for n = 1:num_simulations
     curr_state = randi(size(Model_states,1));
     for n = 1:num_simulations
-        states_hat = squeeze(Model_states(curr_state,policy(curr_state),:)./Model_obs(curr_state,policy(curr_state)));
+        states_hat = squeeze(Model_states(curr_state,policy(curr_state),:))./Model_obs(curr_state,policy(curr_state));
         rewards_hat = squeeze(Model_rewards(curr_state,policy(curr_state),:));
         next_states = [];
         %                     go to a state
@@ -196,11 +196,11 @@ V=0;
 values_future_states=0;
 %     get predictions about rewards at current state
 for i = 1:length(curr_states)
-    states_hat = nansum(squeeze(Model_states(curr_states(i),policy(curr_states(i)),:)./sum(Model_obs(curr_states(i),policy(curr_states(i))))),2);
-    reward_hat = nansum(squeeze(Model_rewards(curr_states(i),policy(curr_states(i)),:)),2);
+    states_hat = nansum(squeeze(Model_states(curr_states(i),policy(curr_states(i)),:))./sum(Model_obs(curr_states(i),policy(curr_states(i)))),2);
+    reward_hat = squeeze(Model_rewards(curr_states(i),policy(curr_states(i)),:));
     value_curr = sum(states_hat.*reward_hat);
     for j = 1:size(states_hat,1)
-        states_hat_future = nansum(squeeze(Model_states(j,policy(j),:)./Model_obs(j,policy(j))),2);
+        states_hat_future = nansum(squeeze(Model_states(j,policy(j),:))./Model_obs(j,policy(j)),2);
         rewards_hat_future = nansum(squeeze(Model_rewards(j,policy(j),:)),2);
         values_future_states(j) = states_hat(j)*nansum(rewards_hat_future.*states_hat_future);
     end
