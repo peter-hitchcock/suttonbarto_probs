@@ -114,7 +114,7 @@ if __name__ == "__main__":
         action, action_index = RL_agent.sel_egreedy_action(agent, q_sa, ACTIONS)
         print("Action:", *action)
         
-        # Find s_prime and reward  
+        # Get s_prime and reward  
         s_prime = RL_agent.eval_state_transition(
             agent, action.move, state, 
             grid.HEIGHT, grid.WIDTH, grid.OCCLUSION_COLS, grid.OCCLUSION_ROWS

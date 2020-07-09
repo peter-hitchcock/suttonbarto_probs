@@ -3,18 +3,7 @@ title: "Chapter 8 - Planning and learning with tabular methods"
 output: html_document
 ---
 
-```{r setup}
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(fig.width=14, fig.height=10)
-```
-
-
-```{r other setup }
-sapply(c('tidyverse', 'dplyr', 'profvis'), require, character=TRUE)
-sf <- function() sapply(paste0('./Functions/', list.files('./Functions/')), source)
-sf()
-DefPlotPars()
-```
+Note coding for this chapter was attempted in Python (see Py folder) so this is just the book notes.  
 
 # Chapter notes  
 
@@ -23,7 +12,7 @@ Chapter develops a unified view of MF (eg. MC, TD) and MB methods (eg. dyn progr
 # 8.1  
 A **model** is just anything that can be used to predict how the environ will respond to one's actions. A model is given a state and action and predicts a subsequent state and reward. Some models enumerate all possible future outcomes, these are *distributional models*; others just estimate a subset sampled according to probabilities, these are *sample models*.  
 
-Distribution models are more powerful, because once you have one you can always produce samples. But sample models are easier; eg. for a model of dice rolling, could just simulate dice rolling a bunch of times and return the sum, whereas it'd be harder to build a model of the $p(s'|r)$'s.  
+Distribution models are more powerful, because once you have one you can always produce samples. But sample models are easier; eg. for a model of dice rolling, could just simulate dice rolling a bunch of times and return the sum, whereas it'd be harder to build a model of the $p(s'|r)$s.  
 
 Planning in RL is taking a model as input and uses it to improve the policy for acting on the modeled environment.  
 
@@ -50,7 +39,7 @@ Matt: Imagine you get to an ice cream shop and are pleasanty surprised. With 1-s
 
 ## 8.7 The two forms of planning  
 1. The DP and Dyna $Q_{SA}$ examples are of the first kind of planning, which is using a model to improve a tabular (or function-appoximated) value representation. This then guides future action selection. Hence, action selection and planning happen at separate times.  
-2. Alternately one can plan when one hits a state. In the simplest case where one just had state values, you'd hit state $S_{t}$ and select an action based on model-based anticipation of $S_{t+1}$, but more generally you can plan multi-step trajectories (and presumably skip states etc.)  
+2. Alternately one can plan when one hits a state. In the simplest case where one just had state values, you'd hit state $S_{t}$ and select an action--we've already done this with eg. e-greedy action selection. But more generally you can plan multi-step trajectories (and presumably skip states etc.). So you can think of heuristic search methods as extending that idea to more states.  
 
 
 
